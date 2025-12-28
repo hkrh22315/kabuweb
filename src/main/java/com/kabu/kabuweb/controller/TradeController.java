@@ -118,11 +118,13 @@ public class TradeController {
 
     private void sendToDiscord(String name, Double current, Double target) {
         try{
+            String userIdH = "896281261788778546";
+            String userIdS = "890490199522545694";
             String json = """
                     {
-            "content": "alert no tuuchi"
+            "content": "<@%s> %s %s %s"
                     }
-                    """.formatted(name, current, target);
+                    """.formatted(userIdH, name, current, target);
             
             HttpClient client = HttpClient.newHttpClient();
             HttpRequest request = HttpRequest.newBuilder()
