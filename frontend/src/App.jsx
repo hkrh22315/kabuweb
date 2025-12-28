@@ -3,8 +3,9 @@ import './App.css'
 
 function App() {
   const [trades, setTrades] = useState([])
-  const [formData, setFormData] = useState({ticker: '', name: '', price: '', amount: '', action: 'BUY'})
-  const [alertForm, setAlertForm] = useState({ticker: '', targetPrice: ''})
+  const USERS = [ { name: 'HR', id: '896281261788778546'}, { name: "SSD", id: '890490199522545694'}]
+  const [formData, setFormData] = useState({ticker: '', name: '', price: '', amount: '', action: 'BUY', discordId: USERS[0].id})
+  const [alertForm, setAlertForm] = useState({ticker: '', targetPrice: '', discordId: USERS[0].id})
 
   // データ取得 (ログイン不要！アプリを開いたらすぐ実行)
   const fetchTrades = () => {
@@ -49,7 +50,9 @@ function App() {
     const dataToSend = {
       ticker: alertForm.ticker,
 
-      targetPrice: Number(alertForm.targetPrice)
+      targetPrice: Number(alertForm.targetPrice),
+
+      discordId: alertForm.discordIdId
     }
 
     fetch('/trades/alert', {
@@ -129,6 +132,11 @@ function App() {
         <form onSubmit={handleAlertSubmit} style={{ display: "flex", flexDirection: " column", gap: "10px"}}>
           <input name="ticker" value={alertForm.ticker} placeholder="code (i,e, 9984.T)" onChange={handleAlertChange} required />
           <input name="targetPrice" type="number" value={alertForm.targetPrice} placeholder="targetprice" onChange={handleAlertChange} required />
+          <select name="discordId" value={alertForm.discordId} onChange={handleAlertChange} style={{marginBottom: "10px"}}>
+            {USERS.map(user => (
+              <option key={user.id} value={user.id}>{username}</option>
+            ))}
+          </select>
           <button type="submit" style={{backgroundColor: "#E91E63", color: "white", border: "none", padding: "10px", fontWeight: "bold", cursor: "pointer", marginTop: "auto"}}>
             set alert
           </button>

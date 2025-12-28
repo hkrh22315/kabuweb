@@ -91,7 +91,7 @@ public class TradeController {
             if (currentPrice == -1.0) continue;
 
             if (Math.abs(currentPrice - trade.getTargetPrice()) <= 5) {
-                sendToDiscord(trade.getName(), currentPrice, trade.getTargetPrice());
+                sendToDiscord(trade.getName(), currentPrice, trade.getTargetPrice(), trade.getDiscordId());
                 tradeRepository.deleteById(trade.getId());
                 notifyCount++;
             }
@@ -116,15 +116,14 @@ public class TradeController {
         return -1.0;
     }
 
-    private void sendToDiscord(String name, Double current, Double target) {
+    private void sendToDiscord(String name, Double current, Double target, String userId) {
         try{
-            String userIdH = "896281261788778546";
-            String userIdS = "890490199522545694";
+            String mention = (userId != null && !userId.isEmpty()) ? "<@" + userId + ">": "";
             String json = """
                     {
             "content": "<@%s> %s %s %s"
                     }
-                    """.formatted(userIdH, name, current, target);
+                    """.formatted(mention, name, current, target);
             
             HttpClient client = HttpClient.newHttpClient();
             HttpRequest request = HttpRequest.newBuilder()

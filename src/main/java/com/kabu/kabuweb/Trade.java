@@ -25,6 +25,8 @@ public class Trade {
 
     private Double targetPrice;
 
+    private String discordId;
+
     //constracta
     public Trade() {}
 
@@ -51,4 +53,8 @@ public class Trade {
 
     public Double getTargetPrice() { return targetPrice;}
     public void setTargetPrice(Double targetPrice) { this.targetPrice = targetPrice;}
+
+    public String getDiscordId() { return discordId;}
+    public void setDiscordId(String discordId) { this.discordId = discordId;}
+
 }
