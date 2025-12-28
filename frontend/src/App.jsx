@@ -52,7 +52,7 @@ function App() {
 
       targetPrice: Number(alertForm.targetPrice),
 
-      discordId: alertForm.discordIdId
+      discordId: alertForm.discordId
     }
 
     fetch('/trades/alert', {
