@@ -6,6 +6,21 @@ function App() {
   const USERS = [ { name: 'HR', id: '896281261788778546'}, { name: "SSD", id: '890490199522545694'}]
   const [formData, setFormData] = useState({ticker: '', name: '', price: '', amount: '', action: 'BUY', discordId: USERS[0].id})
   const [alertForm, setAlertForm] = useState({ticker: '', targetPrice: '', discordId: USERS[0].id})
+  const STOCK_LIST = [
+    { code: '7203.T', name: 'トヨタ自動車' },
+    { code: '9984.T', name: 'ソフトバンクG' },
+    { code: '8306.T', name: '三菱UFJ' },
+    { code: '6758.T', name: 'ソニーG' },
+    { code: '8729.T', name: 'ソニーFG'},
+    { code: '6861.T', name: 'キーエンス' },
+    { code: '6098.T', name: 'リクルート' },
+    { code: '8035.T', name: '東京エレクトロン' },
+    { code: '9983.T', name: 'ファーストリテイリング' },
+    { code: '7974.T', name: '任天堂' },
+    { code: '2914.T', name: 'JT' },
+    { code: '9432.T', name: 'NTT' },
+    { code: '8058.T', name: '三菱商事' },
+  ]
 
   // データ取得 (ログイン不要！アプリを開いたらすぐ実行)
   const fetchTrades = () => {
@@ -101,7 +116,14 @@ function App() {
         <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "10px"}}>
           <div>
             <label style={{display: "block", fontSize: "0.8em"}}>code</label>
-            <input name="ticker" placeholder="銘柄コード (例: 7203.T)" onChange={handleChange} required />
+            <input name="ticker" list="stock-options" placeholder="銘柄コード (例: 7203.T)" onChange={handleChange} required />
+            <datalist id="stock-options">
+              {STOCK_LIST.map(stock => (
+                <option key={stock.code} value={stock.code}>
+                  {stock.name}
+                </option>
+              ))}
+            </datalist>
           </div>
           <div>
             <label style={{display: "block", fontSize: "0.8em"}}>name</label>
@@ -130,7 +152,7 @@ function App() {
         <h3 style={{color: "#C2185B", marginTop: 0}}>set alert</h3>
         <p style={{ fontSize: "0.8em", color: "#666"}}>target kakaku wo nyuryoku</p>
         <form onSubmit={handleAlertSubmit} style={{ display: "flex", flexDirection: " column", gap: "10px"}}>
-          <input name="ticker" value={alertForm.ticker} placeholder="code (i,e, 9984.T)" onChange={handleAlertChange} required />
+          <input name="ticker" list="stock-options" value={alertForm.ticker} placeholder="code (i,e, 9984.T)" onChange={handleAlertChange} required />
           <input name="targetPrice" type="number" value={alertForm.targetPrice} placeholder="targetprice" onChange={handleAlertChange} required />
           <select name="discordId" value={alertForm.discordId} onChange={handleAlertChange} style={{marginBottom: "10px"}}>
             {USERS.map(user => (
