@@ -118,7 +118,7 @@ public class TradeController {
 
     private void sendToDiscord(String name, Double current, Double target, String userId) {
         try{
-            String mention = (userId != null && !userId.isEmpty()) ? "<@" + userId + ">": "";
+            String mention = (userId != null && !userId.isEmpty()) ?  userId : "";
             String json = """
                     {
             "content": "<@%s> %s %s %s"
