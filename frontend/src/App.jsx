@@ -134,7 +134,7 @@ function App() {
           <input name="targetPrice" type="number" value={alertForm.targetPrice} placeholder="targetprice" onChange={handleAlertChange} required />
           <select name="discordId" value={alertForm.discordId} onChange={handleAlertChange} style={{marginBottom: "10px"}}>
             {USERS.map(user => (
-              <option key={user.id} value={user.id}>{username}</option>
+              <option key={user.id} value={user.id}>{user.name}</option>
             ))}
           </select>
           <button type="submit" style={{backgroundColor: "#E91E63", color: "white", border: "none", padding: "10px", fontWeight: "bold", cursor: "pointer", marginTop: "auto"}}>
