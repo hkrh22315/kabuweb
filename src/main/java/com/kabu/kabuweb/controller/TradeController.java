@@ -121,9 +121,9 @@ public class TradeController {
             String mention = (userId != null && !userId.isEmpty()) ?  userId : "";
             String json = """
                     {
-            "content": "<@%s> %s %s %s"
+            "content": "<@%s> %s が %s に近付きました (現在%s")
                     }
-                    """.formatted(mention, name, current, target);
+                    """.formatted(mention, name, target, current);
             
             HttpClient client = HttpClient.newHttpClient();
             HttpRequest request = HttpRequest.newBuilder()
