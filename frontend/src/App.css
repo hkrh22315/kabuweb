@@ -40,3 +40,24 @@
 .read-the-docs {
   color: #888;
 }
+
+.user-badge {
+  background-color: #475569;
+  color: #e2e8f0;
+  font-size: 0.75rem;
+  padding: 2px 8px;
+  border-radius: 4px;
+  margin-bottom: 10px;
+  font-weight: bold;
+  letter-spacing: 0.05px;
+}
+
+.no-spinner::-webkit-outer-spin-button,
+.no-spinner::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.no-spinner{
+  -moz-appearance: textfield;
+}

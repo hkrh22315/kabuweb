@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import './App.css'
 import { ALL_STOCKS } from './stockData';
 
+
 function App() {
   const [trades, setTrades] = useState([])
   const USERS = [ { name: 'HR', id: '896281261788778546'}, { name: "SSD", id: '890490199522545694'}]
@@ -110,18 +111,19 @@ function App() {
 
   return (
     <div style={{ backgroundColor: "white", color: "black", minHeight: "100vh", padding: "20px"}}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center'}}>
-      <h1>📈 Kabuweb Dashboard</h1>
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center'}}>
+      <h1>📈 Kabuweb </h1>
 
         </div>
       {/* 入力フォーム */}
-      <div style={{ display: "flex", gap: "20px", flexWrap: "wrap", marginBottom: "30px"}}>
+      <div style={{ display: "flex", gap: "20px", flexWrap: "wrap", marginBottom: "30px", marginTop: "20px", alignItems: "flex-start"}}>
+
       {/* buy sell form */}
       <div style={{ flex: 1, minWidth: "300px", border: "2px solid #4CAF50", padding: "15px", borderRadius: "8px", backgroundColor: "#f9fff9" }}>
         <h3 style={{color: "2E7D32", marginTop: 0}}>新規登録</h3>
         <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "10px"}}>
           <div>
-            <label style={{display: "block", fontSize: "0.8em"}}>code</label>
+            <label style={{display: "block", fontSize: "0.8em", visibility: "hidden"}}>code</label>
             <input 
             name="ticker"
             list="stock-options" 
@@ -140,22 +142,87 @@ function App() {
             </datalist>
           </div>
           <div>
-            <label style={{display: "block", fontSize: "0.8em"}}>name</label>
+            <label style={{display: "block", fontSize: "0.8em", visibility: "hidden"}}>name</label>
             <input name="name" placeholder="銘柄名 (例: トヨタ)" onChange={handleChange} required />
           </div>
           <div>
-            <label style={{display: "block", fontSize: "0.8em"}}>price</label>
-            <input name="price" type="number" placeholder="取得単価" onChange={handleChange} required />
+            <label style={{display: "block", fontSize: "0.8em", visibility: "hidden"}}>price</label>
+            <input name="price" type="number" value={formData.price} placeholder="取得単価" onChange={handleChange} required />
           </div>
           <div>
-            <label style={{display: "block", fontSize: "0.8em"}}>amount</label>
+            <label style={{display: "block", fontSize: "0.8em", visibility: "hidden"}}>amount</label>
             <input name="amount" type="number" placeholder="株数" onChange={handleChange} required />
           </div>
-          <select name="action" onChange={handleChange}>
-            <option value="BUY">買い</option>
-            <option value="SELL">売り</option>
-          </select>
-          <button type="submit" style={{ backgroundColor: "#4CAF50", color: "white", border: "none", padding: "5px 15px"}}>
+          <div style={{ display: "flex", gap: "20px", margin: "10px 0"}}>
+            <label style={{
+              flex: 1,
+              justifyContent: "center",
+              cursor: "pointer",
+              display: "flex",
+              alignItms: "center",
+              padding: "5px 10px",
+              border: formData.action === 'BUY' ? "2px solid #ff4444" : "1px solid #ccc",
+              borderRadius: "5px",
+              backgroudColor: formData.action === 'BUY' ? "#f0f0f0" : "white",
+            }}>
+              <input
+              type="radio"
+              name="action"
+              value="BUY"
+              checked={formData.action === 'BUY'}
+              onChange={handleChange}
+              style={{marginRight: "8px"}}
+              />
+              <span style={{fontSize: "0.9em"}}>買い</span>
+            </label>
+            <label style={{
+              flex: 1,
+              justifyContent: "center",
+              cursor: "pointer",
+              display: "flex",
+              alignItms: "center",
+              padding: "5px 10px",
+              border: formData.action === 'SELL' ? "2px solid #4CAF50" : "1px solid #ccc",
+              borderRadius: "5px",
+              backgroudColor: formData.action === 'SELL' ? "#f0f0f0" : "white",
+            }}>
+              <input
+              type="radio"
+              name="action"
+              value="SELL"
+              checked={formData.action === 'SELL'}
+              onChange={handleChange}
+              style={{marginRight: "8px"}}
+              />
+              <span style={{fontSize: "0.9em"}}>売り</span>
+            </label>
+          </div>
+          <div stlye={{ display: "flex", gap: "20px", marginBottom: "15px"}}>
+            {USERS.map(user => (
+              <label key={user.id} style={{
+                flex: 1,
+                justifyContent: "center",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                padding: "5px 10px",
+                border: formData.discordId === user.id ? "2px solid #607D8B" : "1px solid #ccc",
+                borderRadius: "5px",
+                backgroundColor: formData.discordId === user.id ? "#eceff1" : "white",
+              }}>
+                <input
+                  type="radio"
+                  name="discordId"
+                  value={user.id}
+                  checked={formData.discordId === user.id}
+                  onChange={handleChange}
+                  style={{ marginRight: "8px" }}
+                />
+                <span style={{ fontWeight: "bold", color: "#455a64" }}>{user.name}</span>
+              </label>
+            ))}
+          </div>
+          <button type="submit" style={{ backgroundColor: "#4CAF50", color: "white", border: "none", padding: "10px"}}>
             登録
           </button>
         </form>
@@ -163,39 +230,70 @@ function App() {
 
       {/* alert form */}
       <div style={{flex: 1, minWidth: "300px", border: "2px solid #E91E63", padding: "15px", borderRadius: "8px", backgroundColor: "#fff0f5"}}>
-        <h3 style={{color: "#C2185B", marginTop: 0}}>set alert</h3>
-        <p style={{ fontSize: "0.8em", color: "#666"}}>target kakaku wo nyuryoku</p>
+        <h3 style={{color: "#C2185B", marginTop: 0}}>通知設定</h3>
         <form onSubmit={handleAlertSubmit} style={{ display: "flex", flexDirection: " column", gap: "10px"}}>
+          <div>
+          <label style={{display: "block", fontSize: "0.8em", visibility: "hidden"}}>code</label>
           <input 
           name="ticker" 
           list="stock-options" 
           value={alertForm.ticker} 
-          placeholder="code (i,e, 9984.T)" 
+          placeholder="銘柄コード (例: 9984.T)" 
           onChange={(e) => {
             handleAlertChange(e);
             updateSuggestions(e);
           }
           } 
           required />
-          <input name="targetPrice" type="number" value={alertForm.targetPrice} placeholder="targetprice" onChange={handleAlertChange} required />
-          <select name="discordId" value={alertForm.discordId} onChange={handleAlertChange} style={{marginBottom: "10px"}}>
+          </div>
+
+          <div>
+          <label style={{display: "block", fontSize: "0.8em", visibility: "hidden"}}>code</label>
+          <input name="targetPrice" type="number" value={alertForm.targetPrice} placeholder="目標価格" onChange={handleAlertChange} required />
+          </div>
+
+          <div style={{ marginTop: "10px"}}></div>
+          <div style={{ display: "flex",flexDirection: "column",  marginBottom: "15px" }}>
             {USERS.map(user => (
-              <option key={user.id} value={user.id}>{user.name}</option>
+              <label key={user.id} style={{
+                flex: 1,
+                justifyContent: "center",
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                padding: "5px 10px",
+                border: alertForm.discordId === user.id ? "2px solid #607D8B" : "1px solid #ccc",
+                borderRadius: "5px",
+                backgroundColor: alertForm.discordId === user.id ? "#eceff1" : "white",
+              }}>
+                <input
+                  type="radio"
+                  name="discordId"
+                  value={user.id}
+                  checked={alertForm.discordId === user.id}
+                  onChange={handleAlertChange}
+                  style={{ marginRight: "8px" }}
+                />
+                <span style={{ fontWeight: "bold", color: "#455a64" }}>{user.name}</span>
+              </label>
             ))}
-          </select>
-          <button type="submit" style={{backgroundColor: "#E91E63", color: "white", border: "none", padding: "10px", fontWeight: "bold", cursor: "pointer", marginTop: "auto"}}>
-            set alert
+          </div>
+          <button type="submit" style={{backgroundColor: "#E91E63", color: "white", border: "none", padding: "10px", fontWeight: "bold", cursor: "pointer"}}>
+            通知セット
           </button>
         </form>
       </div>
       </div>
       
       {/* リスト表示 */}
-      <h3>保有銘柄一覧 & alert list </h3>
+      <h3>保有銘柄 & 通知リスト</h3>
       <ul style={{ padding: 0 }}>
         {trades.map((trade) =>(
           <li key={trade.id} style={{ listStyle: "none", borderBottom: "1px solid #eee", padding: "15px", marginBottom: "10px", boxShadow: "0 2px 5px rgba(0,0,0,0.1)", borderRadius: "5px", display: "flex", justifyContent: "space-between", alignItems: "center", backgroundColor: trade.action === "WATCH" ? "#fff0f5" : "white"}}>
             <div>
+              <spna style={{ backgroundColor: "#607D8B", color: "white", padding: "2px 6px", borderRadius: "4px", fontSize: "0.7em", marginRight: "8px", fontWight:"bold" }}>
+                {USERS.find(u => u.id === trade.discordId)?.name || "Unknown"}
+              </spna>
                 {trade.action === "WATCH" ? (
                   <span><b>{trade.ticker}</b> suppervise</span>
                 ): (
