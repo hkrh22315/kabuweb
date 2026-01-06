@@ -110,8 +110,8 @@ function App() {
 
 
   return (
-    <div style={{ backgroundColor: "white", color: "black", minHeight: "100vh", padding: "20px"}}>
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center'}}>
+    <div style={{ backgroundColor: "black", color: "black", minHeight: "100vh", padding: "20px"}}>
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', color: "white"}}>
       <h1>📈 Kabuweb </h1>
 
         </div>

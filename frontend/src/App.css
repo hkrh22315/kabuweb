@@ -61,3 +61,12 @@
 .no-spinner{
   -moz-appearance: textfield;
 }
+
+body{
+  font-family: 'M PLUS 2', sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+input[type="number"], .price-text{
+  font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+}
