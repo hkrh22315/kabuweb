@@ -10,7 +10,7 @@ import org.jsoup.nodes.Element;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.scheduling.annotation.Scheduled;
 
-import com.kabu.kabuweb.Trade;
+import com.kabu.kabuweb.entity.Trade;
 import com.kabu.kabuweb.repository.TradeRepository;
 
 import java.net.URI;

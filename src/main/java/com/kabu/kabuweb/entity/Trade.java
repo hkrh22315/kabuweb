@@ -1,4 +1,4 @@
-package com.kabu.kabuweb;
+package com.kabu.kabuweb.entity;
 
 import jakarta.persistence.*;
 import lombok.Data;
