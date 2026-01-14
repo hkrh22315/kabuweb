@@ -14,7 +14,10 @@ public class Trade {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     
-    private Long userID;
+    @ManyToOne
+    @JoinColumn(name = "user_id", nullable = false)
+    private User user;
+    
     private String ticker;
     private String name;
     private Double price;
@@ -56,5 +59,8 @@ public class Trade {
 
     public String getDiscordId() { return discordId;}
     public void setDiscordId(String discordId) { this.discordId = discordId;}
+
+    public User getUser() { return user;}
+    public void setUser(User user) { this.user = user;}
 
 }

@@ -9,9 +9,14 @@ import org.jsoup.nodes.Element;
 
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 
 import com.kabu.kabuweb.entity.Trade;
+import com.kabu.kabuweb.entity.User;
 import com.kabu.kabuweb.repository.TradeRepository;
+import com.kabu.kabuweb.repository.UserRepository;
 
 import java.net.URI;
 import java.net.http.HttpRequest;
@@ -36,13 +41,34 @@ public class TradeController {
     @Autowired
     private TradeRepository tradeRepository;
 
+    @Autowired
+    private UserRepository userRepository;
+
+    // 現在のユーザーを取得するヘルパーメソッド
+    private User getCurrentUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null && authentication.getPrincipal() instanceof UserDetails) {
+            UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+            String username = userDetails.getUsername();
+            return userRepository.findByUsername(username)
+                    .orElseThrow(() -> new RuntimeException("User not found: " + username));
+        }
+        throw new RuntimeException("User not authenticated");
+    }
+
     @GetMapping
     public List<Trade> getAllTrades() {
-        return tradeRepository.findAll();
+        User currentUser = getCurrentUser();
+        List<Trade> trades = tradeRepository.findByUser(currentUser);
+        System.out.println("Current user: " + currentUser.getUsername() + " (ID: " + currentUser.getId() + ")");
+        System.out.println("Found " + trades.size() + " trades for user " + currentUser.getUsername());
+        return trades;
     }
 
     @PostMapping("/add")
     public Trade addTrade(@RequestBody Trade trade) {
+        User currentUser = getCurrentUser();
+        trade.setUser(currentUser);
         trade.setTradeDate(LocalDateTime.now());
 
         return tradeRepository.save(trade);
@@ -50,6 +76,15 @@ public class TradeController {
 
     @DeleteMapping("/delete")
     public String deleteTrade(@RequestParam long id) {
+        User currentUser = getCurrentUser();
+        Trade trade = tradeRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Trade not found: " + id));
+        
+        // 現在のユーザーのトレードのみ削除可能
+        if (!trade.getUser().getId().equals(currentUser.getId())) {
+            throw new RuntimeException("Unauthorized: Cannot delete other user's trade");
+        }
+        
         tradeRepository.deleteById(id);
         return "ID: " + id + "delete";
     }
@@ -140,6 +175,8 @@ public class TradeController {
 
     @PostMapping("/alert")
     public Trade addAlert(@RequestBody Trade trade) {
+        User currentUser = getCurrentUser();
+        trade.setUser(currentUser);
         trade.setTradeDate(LocalDateTime.now());
 
         trade.setAction("WATCH");
