@@ -34,7 +34,7 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable())
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/auth/**", "/icon.png", "/vite.svg", "/assets/**", "/", "/index.html", "/error").permitAll()
+                .requestMatchers("/auth/**", "/icon.png", "/vite.svg", "/assets/**", "/", "/index.html", "/error", "/trades/test-price", "/trades/test-discord", "/trades/test-all", "/trades/test-schedule").permitAll()
                 .anyRequest().authenticated()
             )
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

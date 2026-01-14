@@ -2,7 +2,6 @@ package com.kabu.kabuweb.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-import org.hibernate.persister.collection.ElementPropertyMapping;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -22,10 +21,11 @@ import java.net.URI;
 import java.net.http.HttpRequest;
 import java.net.http.HttpClient;
 import java.net.http.HttpResponse;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 import java.lang.Math;
+import jakarta.annotation.PostConstruct;
 
 
 
@@ -44,6 +44,10 @@ public class TradeController {
     @Autowired
     private UserRepository userRepository;
 
+    @PostConstruct
+    public void init() {
+    }
+
     // 現在のユーザーを取得するヘルパーメソッド
     private User getCurrentUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
@@ -60,9 +64,18 @@ public class TradeController {
     public List<Trade> getAllTrades() {
         User currentUser = getCurrentUser();
         List<Trade> trades = tradeRepository.findByUser(currentUser);
-        System.out.println("Current user: " + currentUser.getUsername() + " (ID: " + currentUser.getId() + ")");
-        System.out.println("Found " + trades.size() + " trades for user " + currentUser.getUsername());
         return trades;
+    }
+
+    // アラート専用エンドポイント（action === "WATCH" のトレードのみを返す）
+    @GetMapping("/alerts")
+    public List<Trade> getAlerts() {
+        User currentUser = getCurrentUser();
+        List<Trade> allTrades = tradeRepository.findByUser(currentUser);
+        List<Trade> alerts = allTrades.stream()
+            .filter(t -> "WATCH".equals(t.getAction()))
+            .collect(Collectors.toList());
+        return alerts;
     }
 
     @PostMapping("/add")
@@ -110,28 +123,44 @@ public class TradeController {
         }
     }
 
-    @GetMapping("/check")
+
     @Scheduled(fixedRate = 60000)
-    public String checkPricesAndNotify() {
-        List<Trade> trades = tradeRepository.findAll();
-        int notifyCount = 0;
+    public void checkPricesAndNotify() {
+        // user_id=0 や users に存在しない参照を除外した、チェック対象アラートのみ取得
+        List<Trade> trades;
+        try {
+            trades = tradeRepository.findAlertsToCheck();
+        } catch (Exception e) {
+            System.err.println("[Scheduled Task] アラート取得エラー: " + e.getMessage());
+            e.printStackTrace();
+            return;
+        }
 
         for (Trade trade : trades) {
-            if (trade.getTargetPrice() == null || trade.getTargetPrice() == 0) {
+            if (trade.getUser() == null) {
                 continue;
             }
 
             Double currentPrice = fetchCurrentPrice(trade.getTicker());
 
-            if (currentPrice == -1.0) continue;
+            if (currentPrice == -1.0) {
+                continue;
+            }
 
-            if (Math.abs(currentPrice - trade.getTargetPrice()) <= 5) {
-                sendToDiscord(trade.getName(), currentPrice, trade.getTargetPrice(), trade.getDiscordId());
-                tradeRepository.deleteById(trade.getId());
-                notifyCount++;
+            double priceDiff = Math.abs(currentPrice - trade.getTargetPrice());
+
+            if (priceDiff <= 5) {
+                try {
+                    // UserのDiscord IDを使用
+                    String discordId = trade.getUser().getDiscordId();
+                    sendToDiscord(trade.getName(), currentPrice, trade.getTargetPrice(), discordId);
+                    tradeRepository.deleteById(trade.getId());
+                } catch (Exception e) {
+                    System.err.println("[Scheduled Task] 通知処理エラー (Trade ID: " + trade.getId() + "): " + e.getMessage());
+                    e.printStackTrace();
+                }
             }
         }
-        return notifyCount + "done";
     }
 
     private Double fetchCurrentPrice(String ticker) {
@@ -153,12 +182,13 @@ public class TradeController {
 
     private void sendToDiscord(String name, Double current, Double target, String userId) {
         try{
-            String mention = (userId != null && !userId.isEmpty()) ?  userId : "";
+            String mention = (userId != null && !userId.isEmpty()) ? "<@" + userId + ">" : "";
+            String message = mention + " " + name + " が " + target + " に近付きました (現在: " + current + ")";
             String json = """
                     {
-            "content": "<@%s> %s が %s に近付きました (現在%s")
+            "content": "%s"
                     }
-                    """.formatted(mention, name, target, current);
+                    """.formatted(message.replace("\"", "\\\""));
             
             HttpClient client = HttpClient.newHttpClient();
             HttpRequest request = HttpRequest.newBuilder()
@@ -167,8 +197,13 @@ public class TradeController {
                                  .POST(HttpRequest.BodyPublishers.ofString(json))
                                  .build();
             
-            client.send(request, HttpResponse.BodyHandlers.ofString());
+            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+            
+            if (response.statusCode() != 200 && response.statusCode() != 204) {
+                System.err.println("[Discord通知] 送信失敗: HTTPステータス " + response.statusCode() + ", レスポンス: " + response.body());
+            }
         } catch (Exception e) {
+            System.err.println("[Discord通知] エラー発生: " + e.getMessage());
             e.printStackTrace();
         }
     }
@@ -188,6 +223,8 @@ public class TradeController {
         }
         return tradeRepository.save(trade);
     }
+
+
 
 
     

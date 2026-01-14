@@ -3,6 +3,7 @@ import './App.css'
 import { ALL_STOCKS } from './stockData';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import LoginForm from './components/LoginForm';
+import SettingsForm from './components/SettingsForm';
 import { apiGet, apiPost, apiDelete, apiRequest } from './utils/api';
 
 function MainApp() {
@@ -12,12 +13,12 @@ function MainApp() {
   const [formData, setFormData] = useState({ticker: '', name: '', price: '', amount: '', action: 'BUY', discordId: ''})
   const [alertForm, setAlertForm] = useState({ticker: '', targetPrice: '', discordId: ''})
   const [suggestedStocks, setSuggestedStocks] = useState([]);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   // データ取得
   const fetchTrades = () => {
     apiGet('/trades')
       .then(data => {
-        console.log('Fetched trades:', data);
         setTrades(data);
       })
       .catch(err => {
@@ -29,7 +30,6 @@ function MainApp() {
   // 認証状態が変わったとき、または画面が開いたときにデータを取得
   useEffect(() => {
     if (isAuthenticated) {
-      console.log('User authenticated, fetching trades...');
       fetchTrades();
     } else {
       setTrades([]); // ログアウト時は空配列を設定
@@ -101,13 +101,6 @@ function MainApp() {
     }
   }
 
-  // discord tuuti
-  const handleNotifyCheck = () => {
-    apiRequest('/trades/check')
-      .then(res => res.text())
-      .then(msg => alert("done:" + msg ))
-      .catch(err => alert("error:" + err))
-  }
 
   // ログアウト処理
   const handleLogout = () => {
@@ -127,22 +120,43 @@ function MainApp() {
         <h1>📈 Kabuweb </h1>
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px' }}>
           <div style={{ fontSize: "0.9em", color: "white" }}>ユーザー名: {username || "User"}</div>
-          <button 
-            onClick={handleLogout}
-            style={{
-              backgroundColor: "#f44336",
-              color: "white",
-              border: "none",
-              padding: "8px 16px",
-              borderRadius: "4px",
-              cursor: "pointer",
-              fontSize: "0.9em"
-            }}
-          >
-            ログアウト
-          </button>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button 
+              onClick={() => setIsSettingsOpen(true)}
+              style={{
+                backgroundColor: "#5865F2",
+                color: "white",
+                border: "none",
+                padding: "8px 16px",
+                borderRadius: "4px",
+                cursor: "pointer",
+                fontSize: "0.9em"
+              }}
+            >
+              ⚙️ 設定
+            </button>
+            <button 
+              onClick={handleLogout}
+              style={{
+                backgroundColor: "#f44336",
+                color: "white",
+                border: "none",
+                padding: "8px 16px",
+                borderRadius: "4px",
+                cursor: "pointer",
+                fontSize: "0.9em"
+              }}
+            >
+              ログアウト
+            </button>
+          </div>
         </div>
       </div>
+      <SettingsForm 
+        isOpen={isSettingsOpen} 
+        onClose={() => setIsSettingsOpen(false)} 
+        username={username}
+      />
       {/* 入力フォーム */}
       <div style={{ display: "flex", gap: "20px", flexWrap: "wrap", marginBottom: "30px", marginTop: "20px", alignItems: "flex-start"}}>
 
@@ -242,11 +256,11 @@ function MainApp() {
               justifyContent: "center",
               cursor: "pointer",
               display: "flex",
-              alignItms: "center",
+              alignItems: "center",
               padding: "5px 10px",
               border: formData.action === 'BUY' ? "2px solid #ff4444" : "1px solid #ccc",
               borderRadius: "5px",
-              backgroudColor: formData.action === 'BUY' ? "#f0f0f0" : "white",
+              backgroundColor: formData.action === 'BUY' ? "#f0f0f0" : "white",
             }}>
               <input
               type="radio"
@@ -263,11 +277,11 @@ function MainApp() {
               justifyContent: "center",
               cursor: "pointer",
               display: "flex",
-              alignItms: "center",
+              alignItems: "center",
               padding: "5px 10px",
               border: formData.action === 'SELL' ? "2px solid #4CAF50" : "1px solid #ccc",
               borderRadius: "5px",
-              backgroudColor: formData.action === 'SELL' ? "#f0f0f0" : "white",
+              backgroundColor: formData.action === 'SELL' ? "#f0f0f0" : "white",
             }}>
               <input
               type="radio"
@@ -289,7 +303,7 @@ function MainApp() {
       {/* alert form */}
       <div style={{flex: 1, minWidth: "300px", border: "2px solid #E91E63", padding: "15px", borderRadius: "8px", backgroundColor: "#fff0f5"}}>
         <h3 style={{color: "#C2185B", marginTop: 0}}>通知設定</h3>
-        <form onSubmit={handleAlertSubmit} style={{ display: "flex", flexDirection: " column", gap: "10px"}}>
+        <form onSubmit={handleAlertSubmit} style={{ display: "flex", flexDirection: "column", gap: "10px"}}>
           <div>
           <label style={{display: "block", fontSize: "0.8em", visibility: "hidden"}}>code</label>
           <input 
@@ -348,15 +362,15 @@ function MainApp() {
         {trades.map((trade) =>(
           <li key={trade.id} style={{ listStyle: "none", borderBottom: "1px solid #eee", padding: "15px", marginBottom: "10px", boxShadow: "0 2px 5px rgba(0,0,0,0.1)", borderRadius: "5px", display: "flex", justifyContent: "space-between", alignItems: "center", backgroundColor: trade.action === "WATCH" ? "#fff0f5" : "white"}}>
             <div>
-              <spna style={{ backgroundColor: "#607D8B", color: "white", padding: "2px 6px", borderRadius: "4px", fontSize: "0.7em", marginRight: "8px", fontWight:"bold" }}>
+              <span style={{ backgroundColor: "#607D8B", color: "white", padding: "2px 6px", borderRadius: "4px", fontSize: "0.7em", marginRight: "8px", fontWeight:"bold" }}>
                 {username || "User"}
-              </spna>
+              </span>
                 {trade.action === "WATCH" ? (
                   <span><b>{trade.ticker}</b> suppervise</span>
                 ): (
                   <span><b>{trade.name}</b> <small>({trade.ticker})</small></span>
                 )}
-                <span style={{ marginLeft: "10px" , padding: "2px 5px", borderRadius: "3px", fontSize: "0.8em", color: "white", backgroundColor: trade.action === "BUY" ? "#ff4444": trade.action === "WATCH" ? "#9C27B0" : "2196F3"}}>
+                <span style={{ marginLeft: "10px" , padding: "2px 5px", borderRadius: "3px", fontSize: "0.8em", color: "white", backgroundColor: trade.action === "BUY" ? "#ff4444": trade.action === "WATCH" ? "#9C27B0" : "#2196F3"}}>
                     {trade.action}
                 </span>
                 <div style={{ marginTop: "5px" }}>
@@ -365,7 +379,7 @@ function MainApp() {
                     )}
 
                     {trade.targetPrice > 0 && (
-                      <span style={{marginLeft: trade.action === "WATCH" ? "0" : "15px", color: "E91E63", fontWeight: "bold"}}>
+                      <span style={{marginLeft: trade.action === "WATCH" ? "0" : "15px", color: "#E91E63", fontWeight: "bold"}}>
                         target: {trade.targetPrice}
                       </span>
                     )}

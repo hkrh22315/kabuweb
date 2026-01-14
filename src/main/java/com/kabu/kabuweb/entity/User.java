@@ -17,6 +17,8 @@ public class User {
 
     private String role;
 
+    private String discordId;
+
     // ▼▼▼ Lombok(@Data)をやめて、手動で書きます ▼▼▼
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -29,4 +31,7 @@ public class User {
 
     public String getRole() { return role; }
     public void setRole(String role) { this.role = role; }
+
+    public String getDiscordId() { return discordId; }
+    public void setDiscordId(String discordId) { this.discordId = discordId; }
 }

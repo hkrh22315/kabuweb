@@ -34,7 +34,21 @@ export const apiRequest = async (url, options = {}) => {
     }
 
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      // エラーレスポンスのメッセージを取得
+      let errorMessage = `HTTP error! status: ${response.status}`;
+      try {
+        const errorData = await response.json();
+        errorMessage = errorData.message || errorData || errorMessage;
+      } catch (e) {
+        // JSONでない場合はテキストとして読み取る
+        try {
+          const errorText = await response.text();
+          errorMessage = errorText || errorMessage;
+        } catch (textError) {
+          // テキストも読めない場合はデフォルトメッセージ
+        }
+      }
+      throw new Error(errorMessage);
     }
 
     return response;
@@ -52,15 +66,24 @@ export const apiGet = async (url) => {
 
 // JSONを送信するヘルパー
 export const apiPost = async (url, data) => {
-  const response = await apiRequest(url, {
-    method: 'POST',
-    body: JSON.stringify(data),
-  });
-  return response.json();
+  try {
+    const response = await apiRequest(url, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+    return response.json();
+  } catch (error) {
+    // エラーレスポンスの場合、メッセージを抽出して再スロー
+    if (error.message && error.message.includes('HTTP error')) {
+      // apiRequest内で既にエラーが処理されているが、より詳細なエラーメッセージを提供
+      throw error;
+    }
+    throw error;
+  }
 };
 
 // DELETEリクエストのヘルパー
 export const apiDelete = async (url) => {
   const response = await apiRequest(url, { method: 'DELETE' });
-  return response;
+  return response.json();
 };

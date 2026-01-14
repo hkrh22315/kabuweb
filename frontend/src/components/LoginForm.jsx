@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { apiPost } from '../utils/api';
 
 function LoginForm() {
   const [activeTab, setActiveTab] = useState('login');
@@ -15,30 +16,7 @@ function LoginForm() {
     setLoading(true);
 
     try {
-      const response = await fetch('/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ username, password }),
-      });
-
-      if (!response.ok) {
-        let errorMessage = 'ログインに失敗しました';
-        try {
-          const errorData = await response.json();
-          errorMessage = errorData.message || errorData || errorMessage;
-        } catch (e) {
-          // JSONでない場合はテキストとして読み取る
-          const errorText = await response.text();
-          errorMessage = errorText || errorMessage;
-        }
-        setError(errorMessage);
-        setLoading(false);
-        return;
-      }
-
-      const data = await response.json();
+      const data = await apiPost('/auth/login', { username, password });
 
       // トークンを取得して保存
       if (data.token) {
@@ -48,7 +26,11 @@ function LoginForm() {
         setLoading(false);
       }
     } catch (err) {
-      setError('ネットワークエラーが発生しました');
+      let errorMessage = 'ネットワークエラーが発生しました';
+      if (err.message) {
+        errorMessage = err.message;
+      }
+      setError(errorMessage);
       setLoading(false);
     }
   };
@@ -60,45 +42,10 @@ function LoginForm() {
 
     try {
       // 新規登録APIを呼び出し
-      const registerResponse = await fetch('/auth/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ username, password }),
-      });
-
-      if (!registerResponse.ok) {
-        let errorMessage = '登録に失敗しました';
-        try {
-          const errorData = await registerResponse.json();
-          errorMessage = errorData.message || errorData || errorMessage;
-        } catch (e) {
-          const errorText = await registerResponse.text();
-          errorMessage = errorText || errorMessage;
-        }
-        setError(errorMessage);
-        setLoading(false);
-        return;
-      }
+      await apiPost('/auth/register', { username, password });
 
       // 登録成功後、自動的にログイン
-      const loginResponse = await fetch('/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ username, password }),
-      });
-
-      if (!loginResponse.ok) {
-        setError('登録は成功しましたが、ログインに失敗しました。再度ログインしてください。');
-        setLoading(false);
-        setActiveTab('login');
-        return;
-      }
-
-      const loginData = await loginResponse.json();
+      const loginData = await apiPost('/auth/login', { username, password });
 
       // トークンを取得して保存
       if (loginData.token) {
@@ -109,7 +56,11 @@ function LoginForm() {
         setActiveTab('login');
       }
     } catch (err) {
-      setError('ネットワークエラーが発生しました');
+      let errorMessage = 'ネットワークエラーが発生しました';
+      if (err.message) {
+        errorMessage = err.message;
+      }
+      setError(errorMessage);
       setLoading(false);
     }
   };
