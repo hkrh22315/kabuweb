@@ -2,71 +2,521 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
+@layer base {
+  :root {
+    /* 高級感のあるカラーパレット */
+    --color-primary: #10b981;
+    --color-primary-dark: #059669;
+    --color-secondary: #3b82f6;
+    --color-error: #ef4444;
+    --color-warning: #f59e0b;
+    --color-success: #10b981;
+    
+    /* ゴールド/プラチナアクセント */
+    --color-gold: #d4af37;
+    --color-gold-light: #f4e4bc;
+    --color-gold-dark: #b8941f;
+    --color-platinum: #e5e4e2;
+    --color-platinum-dark: #b8b6b4;
+    
+    /* 背景色 - Cursor風の深い黒 */
+    --color-bg-primary: #0d1117;
+    --color-bg-secondary: #161b22;
+    --color-bg-card: #21262d;
+    --color-bg-card-hover: #30363d;
+    --color-bg-card-light: #ffffff;
+    
+    /* テキスト色 - より洗練された階層 */
+    --color-text-primary: rgba(255, 255, 255, 0.95);
+    --color-text-secondary: rgba(255, 255, 255, 0.7);
+    --color-text-muted: rgba(255, 255, 255, 0.5);
+    --color-text-accent: #d4af37;
+    
+    /* ボーダー色 - より微細な表現 */
+    --color-border: rgba(255, 255, 255, 0.08);
+    --color-border-hover: rgba(255, 255, 255, 0.15);
+    --color-border-accent: rgba(212, 175, 55, 0.3);
+    
+    /* シャドウ - より深い階層感 */
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.15);
+    --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.2);
+    --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.25);
+    --shadow-xl: 0 12px 48px rgba(0, 0, 0, 0.3);
+    --shadow-2xl: 0 16px 64px rgba(0, 0, 0, 0.35);
+  }
 
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+  * {
+    @apply transition-all duration-300;
+  }
 
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  body {
+    @apply m-0 min-h-screen;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+      'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    background: #0d1117;
+    background-attachment: fixed;
+    color: var(--color-text-primary);
+    letter-spacing: 0.01em;
+  }
+
+  #root {
+    @apply w-full min-h-screen;
+  }
+  
+  /* タイポグラフィの改善 - ガラス感のあるテキスト */
+  h1, h2, h3, h4, h5, h6 {
+    letter-spacing: -0.02em;
+    font-weight: 600;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3), 0 1px 2px rgba(0, 0, 0, 0.2);
+  }
+
+  /* 本文テキストにも微細なシャドウ */
+  p, span, div, label {
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  }
+
+  /* ラベルコンポーネント - ガラスモーフィズムスタイル */
+  .label {
+    @apply block mb-2.5 text-sm font-semibold tracking-wide;
+    @apply backdrop-blur-sm;
+    @apply px-2 py-1 rounded;
+    background: linear-gradient(
+      135deg,
+      rgba(33, 38, 45, 0.3) 0%,
+      rgba(33, 38, 45, 0.2) 100%
+    );
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  }
+
+  .label-text {
+    @apply text-slate-300/90;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  }
 }
 
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
+@layer components {
+  /* カードコンポーネント - グラスモーフィズムデザイン */
+  .card {
+    @apply backdrop-blur-2xl rounded-xl;
+    background: linear-gradient(
+      135deg,
+      rgba(33, 38, 45, 0.7) 0%,
+      rgba(33, 38, 45, 0.6) 100%
+    );
+    @apply border;
+    border-color: rgba(255, 255, 255, 0.15);
+    @apply shadow-[0_4px_16px_rgba(0,0,0,0.2)];
+    @apply transition-all duration-300;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.3),
+      transparent
+    );
+    opacity: 0.6;
+  }
+
+  .card-hover {
+    @apply hover:shadow-[0_6px_20px_rgba(0,0,0,0.3)];
+    @apply hover:border-opacity-25;
+    background: linear-gradient(
+      135deg,
+      rgba(48, 54, 61, 0.75) 0%,
+      rgba(48, 54, 61, 0.65) 100%
+    );
+  }
+
+  .card-hover:hover::before {
+    opacity: 0.8;
+  }
+
+  .card-light {
+    @apply bg-white border-gray-200;
+  }
+
+  /* ボタンコンポーネント - ガラスモーフィズムスタイル */
+  .btn {
+    @apply px-5 py-2.5 rounded-lg font-semibold;
+    @apply transition-all duration-300;
+    @apply focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-800;
+    @apply shadow-md hover:shadow-lg;
+    @apply active:scale-[0.98];
+    @apply backdrop-blur-md;
+    letter-spacing: 0.02em;
+    position: relative;
+  }
+
+  .btn-primary {
+    background: linear-gradient(
+      135deg,
+      rgba(16, 185, 129, 0.3) 0%,
+      rgba(16, 185, 129, 0.25) 100%
+    );
+    border: 1px solid rgba(16, 185, 129, 0.4);
+    @apply text-white;
+    @apply focus:ring-emerald-400/50;
+    @apply shadow-emerald-500/20;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  }
+
+  .btn-primary:hover {
+    background: linear-gradient(
+      135deg,
+      rgba(16, 185, 129, 0.4) 0%,
+      rgba(16, 185, 129, 0.35) 100%
+    );
+    border-color: rgba(16, 185, 129, 0.5);
+    box-shadow: 0 6px 20px rgba(16, 185, 129, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  }
+
+  .btn-secondary {
+    background: linear-gradient(
+      135deg,
+      rgba(59, 130, 246, 0.3) 0%,
+      rgba(59, 130, 246, 0.25) 100%
+    );
+    border: 1px solid rgba(59, 130, 246, 0.4);
+    @apply text-white;
+    @apply focus:ring-blue-400/50;
+    @apply shadow-blue-500/20;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  }
+
+  .btn-secondary:hover {
+    background: linear-gradient(
+      135deg,
+      rgba(59, 130, 246, 0.4) 0%,
+      rgba(59, 130, 246, 0.35) 100%
+    );
+    border-color: rgba(59, 130, 246, 0.5);
+    box-shadow: 0 6px 20px rgba(59, 130, 246, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  }
+
+  .btn-danger {
+    background: linear-gradient(
+      135deg,
+      rgba(239, 68, 68, 0.3) 0%,
+      rgba(239, 68, 68, 0.25) 100%
+    );
+    border: 1px solid rgba(239, 68, 68, 0.4);
+    @apply text-white;
+    @apply focus:ring-red-400/50;
+    @apply shadow-red-500/20;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  }
+
+  .btn-danger:hover {
+    background: linear-gradient(
+      135deg,
+      rgba(239, 68, 68, 0.4) 0%,
+      rgba(239, 68, 68, 0.35) 100%
+    );
+    border-color: rgba(239, 68, 68, 0.5);
+    box-shadow: 0 6px 20px rgba(239, 68, 68, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  }
+
+  .btn-ghost {
+    background: linear-gradient(
+      135deg,
+      rgba(33, 38, 45, 0.6) 0%,
+      rgba(33, 38, 45, 0.5) 100%
+    );
+    @apply hover:bg-gradient-to-r;
+    @apply hover:from-[rgba(48,54,61,0.7)] hover:to-[rgba(48,54,61,0.6)];
+    @apply text-white border;
+    border-color: rgba(255, 255, 255, 0.15);
+    @apply hover:border-opacity-25;
+    @apply backdrop-blur-md;
+  }
+
+  /* 入力フィールド - グラスモーフィズムスタイル */
+  .input {
+    @apply w-full px-4 py-3 rounded-lg;
+    background: linear-gradient(
+      135deg,
+      rgba(22, 27, 34, 0.7) 0%,
+      rgba(22, 27, 34, 0.6) 100%
+    );
+    @apply backdrop-blur-md;
+    @apply border text-white;
+    border-color: rgba(255, 255, 255, 0.15);
+    @apply placeholder:text-slate-400/60;
+    @apply focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500/50;
+    @apply transition-all duration-300;
+    @apply shadow-inner;
+    @apply hover:border-opacity-25;
+    position: relative;
+  }
+
+  .input::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.2),
+      transparent
+    );
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  .input:focus::before {
+    opacity: 1;
+  }
+
+  .input-light {
+    @apply bg-white border-gray-300 text-gray-900;
+    @apply placeholder:text-gray-400;
+    @apply focus:ring-emerald-500;
+  }
+
+  /* バッジ - グラスモーフィズムスタイル */
+  .badge {
+    @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold;
+    @apply backdrop-blur-md;
+    @apply border;
+    border-color: rgba(255, 255, 255, 0.15);
+    letter-spacing: 0.03em;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  }
+
+  .badge-primary {
+    background: linear-gradient(
+      135deg,
+      rgba(16, 185, 129, 0.25) 0%,
+      rgba(16, 185, 129, 0.2) 100%
+    );
+    @apply text-emerald-200;
+    border-color: rgba(16, 185, 129, 0.3);
+  }
+
+  .badge-secondary {
+    background: linear-gradient(
+      135deg,
+      rgba(59, 130, 246, 0.25) 0%,
+      rgba(59, 130, 246, 0.2) 100%
+    );
+    @apply text-blue-200;
+    border-color: rgba(59, 130, 246, 0.3);
+  }
+
+  .badge-danger {
+    background: linear-gradient(
+      135deg,
+      rgba(239, 68, 68, 0.25) 0%,
+      rgba(239, 68, 68, 0.2) 100%
+    );
+    @apply text-red-200;
+    border-color: rgba(239, 68, 68, 0.3);
+  }
+
+  .badge-warning {
+    background: linear-gradient(
+      135deg,
+      rgba(245, 158, 11, 0.25) 0%,
+      rgba(245, 158, 11, 0.2) 100%
+    );
+    @apply text-yellow-200;
+    border-color: rgba(245, 158, 11, 0.3);
+  }
+
+  .badge-watch {
+    background: linear-gradient(
+      135deg,
+      rgba(168, 85, 247, 0.25) 0%,
+      rgba(168, 85, 247, 0.2) 100%
+    );
+    @apply text-purple-200;
+    border-color: rgba(168, 85, 247, 0.3);
+  }
+
+  /* モーダルオーバーレイ - Cursor風の深い黒エフェクト */
+  .modal-overlay {
+    @apply fixed inset-0 backdrop-blur-md flex items-center justify-center z-50;
+    background-color: rgba(13, 17, 23, 0.85);
+    @apply transition-all duration-300;
+  }
+
+  /* アニメーション - より滑らかな動き */
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(-20px) scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  @keyframes slideUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* オーロラアニメーション */
+  @keyframes aurora {
+    0% {
+      background-position: 0% 50%;
+    }
+    50% {
+      background-position: 100% 50%;
+    }
+    100% {
+      background-position: 0% 50%;
+    }
+  }
+
+  @keyframes aurora-rotate {
+    0% {
+      transform: rotate(0deg) scale(1);
+    }
+    50% {
+      transform: rotate(180deg) scale(1.1);
+    }
+    100% {
+      transform: rotate(360deg) scale(1);
+    }
+  }
+
+  .animate-fade-in {
+    animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .animate-slide-up {
+    animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  /* オーロラ背景コンテナ */
+  .aurora-bg {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .aurora-bg::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(
+      45deg,
+      transparent 30%,
+      rgba(59, 130, 246, 0.1) 40%,
+      rgba(139, 92, 246, 0.15) 50%,
+      rgba(236, 72, 153, 0.1) 60%,
+      rgba(16, 185, 129, 0.1) 70%,
+      transparent 80%
+    );
+    background-size: 200% 200%;
+    animation: aurora 25s ease-in-out infinite;
+    will-change: background-position;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .aurora-bg::after {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(
+      -45deg,
+      transparent 30%,
+      rgba(16, 185, 129, 0.1) 40%,
+      rgba(236, 72, 153, 0.15) 50%,
+      rgba(139, 92, 246, 0.1) 60%,
+      rgba(59, 130, 246, 0.1) 70%,
+      transparent 80%
+    );
+    background-size: 200% 200%;
+    animation: aurora 30s ease-in-out infinite reverse;
+    will-change: background-position;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .aurora-bg > * {
+    position: relative;
+    z-index: 1;
+  }
 }
-a:hover {
-  color: #535bf2;
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  /* ガラス感のあるテキストユーティリティ */
+  .text-glass {
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  }
+
+  .text-glass-strong {
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.3);
+  }
+}
+
+/* 既存のスタイル（互換性のため保持） */
+.user-badge {
+  background: linear-gradient(
+    135deg,
+    rgba(33, 38, 45, 0.7) 0%,
+    rgba(33, 38, 45, 0.6) 100%
+  );
+  @apply backdrop-blur-md text-slate-200 text-xs px-3 py-1 rounded-lg font-semibold;
+  @apply border;
+  border-color: rgba(255, 255, 255, 0.15);
+  @apply shadow-sm;
+  letter-spacing: 0.05em;
+}
+
+.no-spinner::-webkit-outer-spin-button,
+.no-spinner::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.no-spinner {
+  -moz-appearance: textfield;
 }
 
 body {
-  margin: 0;
-  display: flex;
-  place-items: center;
-  min-width: 320px;
-  min-height: 100vh;
+  font-family: 'M PLUS 2', sans-serif;
+  -webkit-font-smoothing: antialiased;
 }
 
-h1 {
-  font-size: 3.2em;
-  line-height: 1.1;
-}
-
-button {
-  border-radius: 8px;
-  border: 1px solid transparent;
-  padding: 0.6em 1.2em;
-  font-size: 1em;
-  font-weight: 500;
-  font-family: inherit;
-  background-color: #1a1a1a;
-  cursor: pointer;
-  transition: border-color 0.25s;
-}
-button:hover {
-  border-color: #646cff;
-}
-button:focus,
-button:focus-visible {
-  outline: 4px auto -webkit-focus-ring-color;
-}
-
-@media (prefers-color-scheme: light) {
-  :root {
-    color: #213547;
-    background-color: #ffffff;
-  }
-  a:hover {
-    color: #747bff;
-  }
-  button {
-    background-color: #f9f9f9;
-  }
+input[type="number"],
+.price-text {
+  font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
 }

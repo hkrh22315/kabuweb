@@ -85,5 +85,30 @@ export const apiPost = async (url, data) => {
 // DELETEリクエストのヘルパー
 export const apiDelete = async (url) => {
   const response = await apiRequest(url, { method: 'DELETE' });
-  return response.json();
+  
+  // レスポンスが空の場合や、JSONでない場合は成功として扱う
+  const contentType = response.headers.get('content-type');
+  if (contentType && contentType.includes('application/json')) {
+    try {
+      return await response.json();
+    } catch (e) {
+      // JSONパースエラーでも、HTTPステータスが200系なら成功として扱う
+      if (response.ok) {
+        return { success: true };
+      }
+      throw e;
+    }
+  } else {
+    // JSONでない場合は、テキストとして読み取るか、成功として扱う
+    try {
+      const text = await response.text();
+      return { success: true, message: text };
+    } catch (e) {
+      // テキストも読めない場合でも、HTTPステータスが200系なら成功として扱う
+      if (response.ok) {
+        return { success: true };
+      }
+      throw e;
+    }
+  }
 };

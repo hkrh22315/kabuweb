@@ -23,6 +23,8 @@ import java.net.http.HttpClient;
 import java.net.http.HttpResponse;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 import java.util.stream.Collectors;
 import java.lang.Math;
 import jakarta.annotation.PostConstruct;
@@ -222,6 +224,74 @@ public class TradeController {
             trade.setName(trade.getTicker());
         }
         return tradeRepository.save(trade);
+    }
+
+    @PostMapping("/sell")
+    public Map<String, Object> sellTrade(@RequestBody Map<String, Object> request) {
+        User currentUser = getCurrentUser();
+        
+        // リクエストパラメータの取得
+        Long buyTradeId = Long.valueOf(request.get("buyTradeId").toString());
+        Double sellPrice = Double.valueOf(request.get("sellPrice").toString());
+        Integer sellAmount = Integer.valueOf(request.get("sellAmount").toString());
+        
+        // 買い取引を取得
+        Trade buyTrade = tradeRepository.findById(buyTradeId)
+                .orElseThrow(() -> new RuntimeException("Buy trade not found: " + buyTradeId));
+        
+        // ユーザー所有確認
+        if (!buyTrade.getUser().getId().equals(currentUser.getId())) {
+            throw new RuntimeException("Unauthorized: Cannot sell other user's trade");
+        }
+        
+        // 買い取引であることを確認
+        if (!"BUY".equals(buyTrade.getAction())) {
+            throw new RuntimeException("Trade is not a BUY trade");
+        }
+        
+        // 残り数量の計算
+        Integer currentSoldAmount = (buyTrade.getSoldAmount() != null) ? buyTrade.getSoldAmount() : 0;
+        Integer remainingAmount = buyTrade.getAmount() - currentSoldAmount;
+        
+        // バリデーション
+        if (sellAmount <= 0) {
+            throw new RuntimeException("Sell amount must be greater than 0");
+        }
+        if (sellPrice <= 0) {
+            throw new RuntimeException("Sell price must be greater than 0");
+        }
+        if (sellAmount > remainingAmount) {
+            throw new RuntimeException("Sell amount (" + sellAmount + ") exceeds remaining amount (" + remainingAmount + ")");
+        }
+        
+        // 売却取引を作成
+        Trade sellTrade = new Trade();
+        sellTrade.setUser(currentUser);
+        sellTrade.setTicker(buyTrade.getTicker());
+        sellTrade.setName(buyTrade.getName());
+        sellTrade.setPrice(sellPrice);
+        sellTrade.setAmount(sellAmount);
+        sellTrade.setAction("SELL");
+        sellTrade.setTradeDate(LocalDateTime.now());
+        sellTrade.setBuyTradeId(buyTradeId);
+        
+        // 買い取引のsoldAmountを更新
+        buyTrade.setSoldAmount(currentSoldAmount + sellAmount);
+        
+        // 保存
+        Trade savedSellTrade = tradeRepository.save(sellTrade);
+        tradeRepository.save(buyTrade);
+        
+        // 損益を計算
+        Double profitLoss = (sellPrice - buyTrade.getPrice()) * sellAmount;
+        
+        // レスポンスを作成
+        Map<String, Object> response = new HashMap<>();
+        response.put("sellTrade", savedSellTrade);
+        response.put("profitLoss", profitLoss);
+        response.put("remainingAmount", remainingAmount - sellAmount);
+        
+        return response;
     }
 
 

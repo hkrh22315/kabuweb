@@ -82,69 +82,43 @@ function SettingsForm({ isOpen, onClose, username }) {
   if (!isOpen) return null;
 
   return (
-    <div style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      backgroundColor: 'rgba(0, 0, 0, 0.7)',
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-      zIndex: 1000
-    }} onClick={onClose}>
-      <div style={{
-        backgroundColor: '#1a1a1a',
-        padding: '30px',
-        borderRadius: '8px',
-        border: '2px solid #5865F2',
-        minWidth: '400px',
-        maxWidth: '90%',
-        color: 'white'
-      }} onClick={(e) => e.stopPropagation()}>
-        <div style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginBottom: '20px'
-        }}>
-          <h2 style={{ margin: 0, color: '#5865F2' }}>⚙️ ユーザー設定</h2>
+    <div className="modal-overlay animate-fade-in" onClick={onClose}>
+      <div 
+        className="card p-6 md:p-8 w-full max-w-md mx-4 animate-fade-in backdrop-blur-3xl" 
+        style={{ 
+          borderColor: 'rgba(59, 130, 246, 0.25)',
+          background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(33, 38, 45, 0.65) 50%, rgba(33, 38, 45, 0.6) 100%)',
+          boxShadow: '0 8px 24px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-2xl font-bold bg-gradient-to-r from-blue-400 via-blue-500 to-blue-600 bg-clip-text text-transparent tracking-tight text-glass-strong">
+            ユーザー設定
+          </h2>
           <button
             onClick={onClose}
-            style={{
-              backgroundColor: 'transparent',
-              border: 'none',
-              color: '#888',
-              fontSize: '24px',
-              cursor: 'pointer',
-              padding: '0',
-              width: '30px',
-              height: '30px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}
+            className="text-slate-400 hover:text-white text-2xl leading-none transition-all duration-300 w-9 h-9 flex items-center justify-center rounded-lg hover:bg-slate-700/70 hover:shadow-md"
           >
             ×
           </button>
         </div>
 
-        <div style={{ marginBottom: '15px', fontSize: '0.9em', color: '#aaa' }}>
-          ユーザー名: <strong>{username}</strong>
+        <div className="mb-6 text-sm text-slate-400/80 text-glass">
+          ユーザー名: <strong className="text-emerald-400 font-semibold">{username}</strong>
         </div>
 
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+        <form onSubmit={handleSubmit} className="space-y-5">
           <div>
-            <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.9em' }}>
+            <label className="block mb-2.5 text-sm font-semibold text-slate-300/90 tracking-wide text-glass">
               Discord ID
               {discordId && (
-                <span style={{ marginLeft: '10px', color: '#4CAF50', fontSize: '0.85em' }}>
+                <span className="ml-2 text-emerald-400 text-xs font-medium">
                   ✓ 登録済み
                 </span>
               )}
               {!discordId && !fetching && (
-                <span style={{ marginLeft: '10px', color: '#888', fontSize: '0.85em' }}>
+                <span className="ml-2 text-slate-500/70 text-xs">
                   (未登録)
                 </span>
               )}
@@ -155,19 +129,9 @@ function SettingsForm({ isOpen, onClose, username }) {
               onChange={(e) => setDiscordId(e.target.value)}
               placeholder={fetching ? "読み込み中..." : "DiscordユーザーIDを入力 (例: 896281261788778546)"}
               disabled={fetching}
-              style={{
-                width: '100%',
-                padding: '10px',
-                borderRadius: '4px',
-                border: '1px solid #555',
-                backgroundColor: '#2a2a2a',
-                color: 'white',
-                fontSize: '1em',
-                boxSizing: 'border-box',
-                opacity: fetching ? 0.6 : 1
-              }}
+              className={`input w-full ${fetching ? 'opacity-60 cursor-not-allowed' : ''}`}
             />
-            <div style={{ fontSize: '0.8em', color: '#888', marginTop: '5px' }}>
+            <div className="text-xs text-slate-500/70 mt-2 leading-relaxed text-glass">
               Discordで通知を受け取るために、ユーザーIDを登録してください。
               <br />
               （ユーザーIDはDiscordの設定から確認できます）
@@ -175,48 +139,41 @@ function SettingsForm({ isOpen, onClose, username }) {
           </div>
 
           {message && (
-            <div style={{
-              padding: '10px',
-              borderRadius: '4px',
-              backgroundColor: messageType === 'success' ? '#1a3a1a' : '#3a1a1a',
-              color: messageType === 'success' ? '#4CAF50' : '#f44336',
-              fontSize: '0.9em'
-            }}>
+            <div className={`
+              px-4 py-3 rounded-lg text-sm animate-fade-in shadow-lg text-glass
+              ${messageType === 'success' 
+                ? 'bg-emerald-950/60 border border-emerald-500/50 text-emerald-300 shadow-emerald-500/10' 
+                : 'bg-red-950/60 border border-red-500/50 text-red-300 shadow-red-500/10'
+              }
+            `}>
               {message}
             </div>
           )}
 
-          <div style={{ display: 'flex', gap: '10px', flexDirection: 'column' }}>
-            <div style={{ display: 'flex', gap: '10px' }}>
+          <div className="flex flex-col gap-3">
+            <div className="flex gap-3">
               <button
                 type="submit"
                 disabled={loading || fetching}
-                style={{
-                  flex: 1,
-                  backgroundColor: '#5865F2',
-                  color: 'white',
-                  border: 'none',
-                  padding: '12px',
-                  borderRadius: '4px',
-                  fontSize: '1em',
-                  cursor: (loading || fetching) ? 'not-allowed' : 'pointer',
-                  opacity: (loading || fetching) ? 0.6 : 1
-                }}
+                className={`
+                  btn btn-secondary flex-1 py-3 font-semibold
+                  ${(loading || fetching) ? 'opacity-60 cursor-not-allowed' : ''}
+                `}
               >
-                {loading ? '登録中...' : 'Discord IDを登録・更新'}
+                {loading ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    登録中...
+                  </span>
+                ) : 'Discord IDを登録・更新'}
               </button>
               <button
                 type="button"
                 onClick={onClose}
-                style={{
-                  backgroundColor: '#555',
-                  color: 'white',
-                  border: 'none',
-                  padding: '12px 20px',
-                  borderRadius: '4px',
-                  fontSize: '1em',
-                  cursor: 'pointer'
-                }}
+                className="btn btn-ghost px-6 py-3"
               >
                 閉じる
               </button>
@@ -226,19 +183,20 @@ function SettingsForm({ isOpen, onClose, username }) {
                 type="button"
                 onClick={handleDelete}
                 disabled={loading || fetching}
-                style={{
-                  width: '100%',
-                  backgroundColor: '#d32f2f',
-                  color: 'white',
-                  border: 'none',
-                  padding: '10px',
-                  borderRadius: '4px',
-                  fontSize: '0.9em',
-                  cursor: (loading || fetching) ? 'not-allowed' : 'pointer',
-                  opacity: (loading || fetching) ? 0.6 : 1
-                }}
+                className={`
+                  btn btn-danger w-full py-3 text-sm
+                  ${(loading || fetching) ? 'opacity-60 cursor-not-allowed' : ''}
+                `}
               >
-                {loading ? '削除中...' : 'Discord IDを削除'}
+                {loading ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    削除中...
+                  </span>
+                ) : 'Discord IDを削除'}
               </button>
             )}
           </div>

@@ -30,6 +30,10 @@ public class Trade {
 
     private String discordId;
 
+    private Long buyTradeId;
+
+    private Integer soldAmount;
+
     //constracta
     public Trade() {}
 
@@ -62,5 +66,11 @@ public class Trade {
 
     public User getUser() { return user;}
     public void setUser(User user) { this.user = user;}
+
+    public Long getBuyTradeId() { return buyTradeId;}
+    public void setBuyTradeId(Long buyTradeId) { this.buyTradeId = buyTradeId;}
+
+    public Integer getSoldAmount() { return soldAmount;}
+    public void setSoldAmount(Integer soldAmount) { this.soldAmount = soldAmount;}
 
 }
