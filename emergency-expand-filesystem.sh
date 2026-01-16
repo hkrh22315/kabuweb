@@ -112,21 +112,35 @@ echo ""
 ROOT_DEVICE_DISPLAY=$(df / | tail -1 | awk '{print $1}')
 echo "📊 ルートファイルシステム（表示）: $ROOT_DEVICE_DISPLAY"
 
-# lsblkから実際のデバイスを取得（ルートにマウントされているパーティション）
-ROOT_PART_NAME=$(lsblk -n -o NAME,MOUNTPOINT | awk '$2 == "/" {print $1; exit}')
-if [ -z "$ROOT_PART_NAME" ]; then
-    # 別の方法で取得（スペースを含む場合）
-    ROOT_PART_NAME=$(lsblk -n -o NAME,MOUNTPOINT | grep -E '[[:space:]]+/$' | awk '{print $1; exit}')
+# findmntを使って実際のデバイスを取得（最も確実な方法）
+if command -v findmnt &> /dev/null; then
+    ROOT_DEVICE=$(findmnt -n -o SOURCE /)
+    if [ -z "$ROOT_DEVICE" ]; then
+        # findmntが失敗した場合、lsblkを試す
+        ROOT_PART_NAME=$(lsblk -n -o NAME,MOUNTPOINT | awk '$2 == "/" {print $1; exit}' | tr -d '├─│└─ ')
+        if [ ! -z "$ROOT_PART_NAME" ]; then
+            ROOT_DEVICE="/dev/$ROOT_PART_NAME"
+        fi
+    fi
+else
+    # findmntが利用できない場合、lsblkを使用（ツリー記号を除去）
+    ROOT_PART_NAME=$(lsblk -n -o NAME,MOUNTPOINT | awk '$2 == "/" {print $1; exit}' | tr -d '├─│└─ ')
+    if [ -z "$ROOT_PART_NAME" ]; then
+        # 別の方法で取得（スペースを含む場合）
+        ROOT_PART_NAME=$(lsblk -n -o NAME,MOUNTPOINT | grep -E '[[:space:]]+/$' | awk '{print $1; exit}' | tr -d '├─│└─ ')
+    fi
+    if [ ! -z "$ROOT_PART_NAME" ]; then
+        ROOT_DEVICE="/dev/$ROOT_PART_NAME"
+    fi
 fi
 
-if [ ! -z "$ROOT_PART_NAME" ]; then
-    ROOT_DEVICE="/dev/$ROOT_PART_NAME"
-    echo "📊 実際のデバイス（lsblkから）: $ROOT_DEVICE"
-else
+if [ -z "$ROOT_DEVICE" ]; then
     echo "❌ デバイスを特定できませんでした。"
     echo "   lsblk の出力を確認し、ルートパーティション（/）のデバイス名を使用してください"
     exit 1
 fi
+
+echo "📊 実際のデバイス: $ROOT_DEVICE"
 
 echo "📊 使用するデバイス: $ROOT_DEVICE"
 echo ""
