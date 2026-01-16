@@ -20,41 +20,20 @@ echo ""
 ROOT_DEVICE_DISPLAY=$(df / | tail -1 | awk '{print $1}')
 echo "📊 ルートファイルシステム（表示）: $ROOT_DEVICE_DISPLAY"
 
-# /dev/rootの場合は実際のデバイスをlsblkから取得
-if [ "$ROOT_DEVICE_DISPLAY" == "/dev/root" ]; then
-    # lsblkから実際のデバイスを取得（ルートにマウントされているパーティション）
-    ACTUAL_DEVICE=$(lsblk -n -o NAME,MOUNTPOINT | grep -E " /$| / " | head -1 | awk '{print $1}')
-    if [ -z "$ACTUAL_DEVICE" ]; then
-        # 別の方法で取得
-        ACTUAL_DEVICE=$(lsblk -n -o PKNAME,MOUNTPOINT | grep " /$" | awk '{print $1}')
-        if [ ! -z "$ACTUAL_DEVICE" ]; then
-            # パーティション番号も取得
-            PART_NAME=$(lsblk -n -o NAME,MOUNTPOINT | grep " /$" | awk '{print $1}')
-            ACTUAL_DEVICE="/dev/$PART_NAME"
-        fi
-    else
-        ACTUAL_DEVICE="/dev/$ACTUAL_DEVICE"
-    fi
-    echo "📊 実際のデバイス（lsblkから）: $ACTUAL_DEVICE"
-    ROOT_DEVICE=$ACTUAL_DEVICE
-else
-    ROOT_DEVICE=$ROOT_DEVICE_DISPLAY
-    ACTUAL_DEVICE=$ROOT_DEVICE
+# lsblkから実際のデバイスを取得（ルートにマウントされているパーティション）
+ROOT_PART_NAME=$(lsblk -n -o NAME,MOUNTPOINT | awk '$2 == "/" {print $1; exit}')
+if [ -z "$ROOT_PART_NAME" ]; then
+    # 別の方法で取得（スペースを含む場合）
+    ROOT_PART_NAME=$(lsblk -n -o NAME,MOUNTPOINT | grep -E '[[:space:]]+/$' | awk '{print $1; exit}')
 fi
 
-# デバイスが見つからない場合のフォールバック
-if [ -z "$ROOT_DEVICE" ] || [ "$ROOT_DEVICE" == "/dev/" ]; then
-    echo "⚠️  lsblkからデバイスを取得できませんでした。手動で指定します..."
-    # lsblkの出力から推測
-    ROOT_PART=$(lsblk -n -o NAME,MOUNTPOINT | grep " /$" | awk '{print $1}')
-    if [ ! -z "$ROOT_PART" ]; then
-        ROOT_DEVICE="/dev/$ROOT_PART"
-        echo "📊 推測されたデバイス: $ROOT_DEVICE"
-    else
-        echo "❌ デバイスを特定できませんでした。手動で実行してください。"
-        echo "   lsblk の出力を確認し、ルートパーティション（/）のデバイス名を使用してください"
-        exit 1
-    fi
+if [ ! -z "$ROOT_PART_NAME" ]; then
+    ROOT_DEVICE="/dev/$ROOT_PART_NAME"
+    echo "📊 実際のデバイス（lsblkから）: $ROOT_DEVICE"
+else
+    echo "❌ デバイスを特定できませんでした。"
+    echo "   lsblk の出力を確認し、ルートパーティション（/）のデバイス名を使用してください"
+    exit 1
 fi
 
 echo "📊 使用するデバイス: $ROOT_DEVICE"
