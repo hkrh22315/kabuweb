@@ -290,6 +290,23 @@
     @apply focus:ring-emerald-500;
   }
 
+  /* datalist選択時の-webkit-autofillスタイルを上書き */
+  .input:-webkit-autofill,
+  .input:-webkit-autofill:hover,
+  .input:-webkit-autofill:focus,
+  .input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 30px rgba(22, 27, 34, 0.7) inset !important;
+    -webkit-text-fill-color: rgba(255, 255, 255, 0.95) !important;
+    background: linear-gradient(
+      135deg,
+      rgba(22, 27, 34, 0.7) 0%,
+      rgba(22, 27, 34, 0.6) 100%
+    ) !important;
+    border-color: rgba(255, 255, 255, 0.15) !important;
+    transition: background-color 5000s ease-in-out 0s;
+    caret-color: rgba(255, 255, 255, 0.95);
+  }
+
   /* バッジ - グラスモーフィズムスタイル */
   .badge {
     @apply inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold;

@@ -52,10 +52,6 @@ function SettingsForm({ isOpen, onClose, username }) {
   };
 
   const handleDelete = async () => {
-    if (!window.confirm('Discord IDを削除してもよろしいですか？')) {
-      return;
-    }
-
     setLoading(true);
     setMessage('');
     setMessageType('');

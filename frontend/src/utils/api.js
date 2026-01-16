@@ -25,8 +25,8 @@ export const apiRequest = async (url, options = {}) => {
   try {
     const response = await fetch(fullUrl, config);
     
-    // 401エラーの場合、認証エラーとして扱う
-    if (response.status === 401) {
+    // 401または403エラーの場合、認証エラーとして扱う
+    if (response.status === 401 || response.status === 403) {
       localStorage.removeItem('jwt_token');
       // リロードしてログイン画面に戻る
       window.location.reload();

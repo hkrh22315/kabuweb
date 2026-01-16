@@ -11,7 +11,7 @@ function MainApp() {
   const { isAuthenticated, logout, username } = useAuth();
   const [trades, setTrades] = useState([])
   const USERS = [ { name: 'HR', id: '896281261788778546'}, { name: "SSD", id: '890490199522545694'}]
-  const [formData, setFormData] = useState({ticker: '', name: '', price: '', amount: '', action: 'BUY', discordId: ''})
+  const [formData, setFormData] = useState({ticker: '', price: '', amount: '', action: 'BUY', discordId: ''})
   const [alertForm, setAlertForm] = useState({ticker: '', targetPrice: '', discordId: ''})
   const [suggestedStocks, setSuggestedStocks] = useState([]);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -60,76 +60,17 @@ function MainApp() {
     return code.replace(/\.T$/, '');
   };
 
-  // 銘柄名から銘柄コードを自動取得
-  const autoFillTickerFromName = (name) => {
-    if (!name || name.length === 0) return;
-    
-    const normalizedName = normalizeSearchText(name);
-    let match = null;
-    
-    // 1. 銘柄名（name）での完全一致
-    match = ALL_STOCKS.find(stock => 
-      normalizeSearchText(stock.name) === normalizedName
-    );
-    
-    // 2. 銘柄名（name）での部分一致
-    if (!match) {
-      match = ALL_STOCKS.find(stock => 
-        normalizeSearchText(stock.name).includes(normalizedName) ||
-        stock.name.includes(name)
-      );
-    }
-    
-    // 3. 平仮名（kana）での完全一致
-    if (!match) {
-      match = ALL_STOCKS.find(stock => {
-        if (!stock.kana) return false;
-        const normalizedKana = normalizeSearchText(stock.kana);
-        return normalizedKana === normalizedName;
-      });
-    }
-    
-    // 4. 平仮名（kana）での部分一致
-    if (!match) {
-      match = ALL_STOCKS.find(stock => {
-        if (!stock.kana) return false;
-        const normalizedKana = normalizeSearchText(stock.kana);
-        return normalizedKana.includes(normalizedName);
-      });
-    }
-    
-    // 5. ローマ字（romaji）での完全一致
-    if (!match) {
-      match = ALL_STOCKS.find(stock => {
-        if (!stock.romaji) return false;
-        const normalizedRomaji = normalizeSearchText(stock.romaji);
-        return normalizedRomaji === normalizedName;
-      });
-    }
-    
-    // 6. ローマ字（romaji）での部分一致
-    if (!match) {
-      match = ALL_STOCKS.find(stock => {
-        if (!stock.romaji) return false;
-        const normalizedRomaji = normalizeSearchText(stock.romaji);
-        return normalizedRomaji.includes(normalizedName);
-      });
-    }
-    
-    if (match) {
-      setFormData(prev => ({ ...prev, ticker: match.code }));
-    }
+  // 銘柄コードから銘柄名を取得
+  const getStockNameFromTicker = (ticker) => {
+    if (!ticker) return ticker || '';
+    const stock = ALL_STOCKS.find(s => s.code === ticker);
+    return stock ? stock.name : ticker; // 見つからない場合は銘柄コードを返す
   };
 
   // フォーム入力の処理
   const handleChange = (e) => {
     const newFormData = { ...formData, [e.target.name]: e.target.value };
     setFormData(newFormData);
-    
-    // 銘柄名フィールドに入力があった場合、自動的に銘柄コードを設定
-    if (e.target.name === 'name' && e.target.value.length > 0) {
-      autoFillTickerFromName(e.target.value);
-    }
   }
 
   //候補関数（改善版）
@@ -229,9 +170,12 @@ function MainApp() {
     apiPost('/trades/add', formData)
       .then(() => {
         fetchTrades()
-        alert("登録しました")
+        // フォームをクリア
+        setFormData({ticker: '', price: '', amount: '', action: 'BUY', discordId: ''})
       })
-      .catch(err => alert(err))
+      .catch(err => {
+        console.error('登録エラー:', err)
+      })
   }
 
   const handleAlertChange = (e) => {
@@ -251,23 +195,21 @@ function MainApp() {
       .then(() => {
         fetchTrades()
         setAlertForm({ticker: '', targetPrice: '', discordId: ''})
-        alert("add alert list")
       })
-      .catch(err => alert(err))
+      .catch(err => {
+        console.error('通知設定エラー:', err)
+      })
   }
 
   // 削除ボタン
   const handleDelete = (id) => {
-    if (window.confirm("削除しますか？")) {
-      apiDelete(`/trades/delete?id=${id}`)
-        .then(() => {
-          fetchTrades();
-        })
-        .catch(err => {
-          console.error("削除エラー:", err);
-          alert("削除に失敗しました: " + (err.message || err));
-        })
-    }
+    apiDelete(`/trades/delete?id=${id}`)
+      .then(() => {
+        fetchTrades();
+      })
+      .catch(err => {
+        console.error("削除エラー:", err);
+      })
   }
 
   // 売却処理
@@ -279,13 +221,6 @@ function MainApp() {
     });
     
     fetchTrades();
-    
-    // 損益を表示
-    const profitLoss = response.profitLoss;
-    const message = profitLoss >= 0 
-      ? `売却完了！利益: ¥${profitLoss.toLocaleString()}` 
-      : `売却完了！損失: ¥${Math.abs(profitLoss).toLocaleString()}`;
-    alert(message);
     
     return response;
   }
@@ -299,9 +234,7 @@ function MainApp() {
 
   // ログアウト処理
   const handleLogout = () => {
-    if (window.confirm("ログアウトしますか？")) {
-      logout()
-    }
+    logout()
   }
 
 
@@ -429,20 +362,11 @@ function MainApp() {
                 />
                 <datalist id="stock-options">
                   {suggestedStocks.map(stock => (
-                    <option key={stock.code} value={`${stock.code} - ${stock.name}`}>
+                    <option key={stock.code} value={`${stock.code} - ${stock.name} / ${stock.kana || ''} / ${stock.romaji || ''}`}>
                       {stock.name}
                     </option>
                   ))}
                 </datalist>
-              </div>
-              <div>
-                <input 
-                  name="name" 
-                  placeholder="銘柄名 (例: トヨタ)" 
-                  className="input w-full"
-                  onChange={handleChange} 
-                  required 
-                />
               </div>
               <div>
                 <input 
@@ -459,47 +383,12 @@ function MainApp() {
                 <input 
                   name="amount" 
                   type="number" 
+                  value={formData.amount}
                   placeholder="株数" 
                   className="input w-full no-spinner"
                   onChange={handleChange} 
                   required 
                 />
-              </div>
-              <div className="flex gap-3 my-5">
-                <label className={`
-                  flex-1 flex items-center justify-center cursor-pointer px-4 py-3 rounded-lg border-2 transition-all duration-300
-                  ${formData.action === 'BUY' 
-                    ? 'border-red-500/70 bg-red-500/15 text-red-300 shadow-lg shadow-red-500/10' 
-                    : 'border-slate-600/50 bg-slate-700/30 text-slate-400 hover:border-slate-500/70 hover:bg-slate-700/50'
-                  }
-                `}>
-                  <input
-                    type="radio"
-                    name="action"
-                    value="BUY"
-                    checked={formData.action === 'BUY'}
-                    onChange={handleChange}
-                    className="mr-2"
-                  />
-                  <span className="font-semibold">買い</span>
-                </label>
-                <label className={`
-                  flex-1 flex items-center justify-center cursor-pointer px-4 py-3 rounded-lg border-2 transition-all duration-300
-                  ${formData.action === 'SELL' 
-                    ? 'border-green-500/70 bg-green-500/15 text-green-300 shadow-lg shadow-green-500/10' 
-                    : 'border-slate-600/50 bg-slate-700/30 text-slate-400 hover:border-slate-500/70 hover:bg-slate-700/50'
-                  }
-                `}>
-                  <input
-                    type="radio"
-                    name="action"
-                    value="SELL"
-                    checked={formData.action === 'SELL'}
-                    onChange={handleChange}
-                    className="mr-2"
-                  />
-                  <span className="font-semibold">売り</span>
-                </label>
               </div>
               <button type="submit" className="btn btn-primary w-full py-3 sm:py-3.5 text-base sm:text-lg font-semibold">
                 登録
@@ -542,7 +431,7 @@ function MainApp() {
                 />
                 <datalist id="stock-options-alert">
                   {suggestedStocks.map(stock => (
-                    <option key={stock.code} value={`${stock.code} - ${stock.name}`}>
+                    <option key={stock.code} value={`${stock.code} - ${stock.name} / ${stock.kana || ''} / ${stock.romaji || ''}`}>
                       {stock.name}
                     </option>
                   ))}
@@ -641,7 +530,7 @@ function MainApp() {
                             >
                               <td className="py-4 px-4">
                                 <div className="flex flex-col">
-                                  <span className="font-semibold text-white text-base">{trade.name}</span>
+                                  <span className="font-semibold text-white text-base">{getStockNameFromTicker(trade.ticker)}</span>
                                   <span className="text-slate-400 text-sm">({trade.ticker})</span>
                                 </div>
                               </td>
@@ -727,7 +616,7 @@ function MainApp() {
                             >
                               <td className="py-4 px-4">
                                 <div className="flex flex-col">
-                                  <span className="font-semibold text-white text-base">{trade.name}</span>
+                                  <span className="font-semibold text-white text-base">{getStockNameFromTicker(trade.ticker)}</span>
                                   <span className="text-slate-400 text-sm">({trade.ticker})</span>
                                 </div>
                               </td>
@@ -826,7 +715,10 @@ function MainApp() {
                             className="border-b border-slate-700/30 hover:bg-slate-800/30 transition-colors"
                           >
                             <td className="py-4 px-4">
-                              <span className="font-semibold text-pink-300 text-base">{trade.ticker}</span>
+                              <div className="flex flex-col">
+                                <span className="font-semibold text-white text-base">{getStockNameFromTicker(trade.ticker)}</span>
+                                <span className="text-slate-400 text-sm">({trade.ticker})</span>
+                              </div>
                             </td>
                             <td className="py-4 px-4 text-right">
                               {trade.targetPrice > 0 && (
