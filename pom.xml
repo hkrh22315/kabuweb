@@ -84,11 +84,23 @@
 	</dependencies>
 
 	<build>
+		<resources>
+			<resource>
+				<directory>src/main/resources</directory>
+				<filtering>true</filtering>
+				<excludes>
+					<exclude>**/*.log</exclude>
+					<exclude>**/*.tmp</exclude>
+				</excludes>
+			</resource>
+		</resources>
 		<plugins>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
 				<configuration>
+					<source>17</source>
+					<target>17</target>
 					<annotationProcessorPaths>
 						<path>
 							<groupId>org.projectlombok</groupId>
@@ -107,6 +119,23 @@
 							<artifactId>lombok</artifactId>
 						</exclude>
 					</excludes>
+					<!-- ビルド時のメモリ使用量を最適化 -->
+					<jvmArguments>
+						-Xmx512m -Xms256m
+					</jvmArguments>
+				</configuration>
+			</plugin>
+			<!-- Maven Clean Plugin: クリーンアップを最適化 -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-clean-plugin</artifactId>
+				<configuration>
+					<filesets>
+						<fileset>
+							<directory>target</directory>
+							<followSymlinks>false</followSymlinks>
+						</fileset>
+					</filesets>
 				</configuration>
 			</plugin>
 		</plugins>
