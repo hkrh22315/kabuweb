@@ -17,17 +17,44 @@ lsblk
 echo ""
 
 # ルートファイルシステムのデバイスを確認
-ROOT_DEVICE=$(df / | tail -1 | awk '{print $1}')
-echo "📊 ルートファイルシステム（表示）: $ROOT_DEVICE"
+ROOT_DEVICE_DISPLAY=$(df / | tail -1 | awk '{print $1}')
+echo "📊 ルートファイルシステム（表示）: $ROOT_DEVICE_DISPLAY"
 
-# /dev/rootの場合は実際のデバイスを確認
-if [ "$ROOT_DEVICE" == "/dev/root" ]; then
-    # lsblkから実際のデバイスを取得
-    ACTUAL_DEVICE=$(lsblk -n -o NAME,MOUNTPOINT | grep " /$" | awk '{print "/dev/"$1}')
-    echo "📊 実際のデバイス: $ACTUAL_DEVICE"
+# /dev/rootの場合は実際のデバイスをlsblkから取得
+if [ "$ROOT_DEVICE_DISPLAY" == "/dev/root" ]; then
+    # lsblkから実際のデバイスを取得（ルートにマウントされているパーティション）
+    ACTUAL_DEVICE=$(lsblk -n -o NAME,MOUNTPOINT | grep -E " /$| / " | head -1 | awk '{print $1}')
+    if [ -z "$ACTUAL_DEVICE" ]; then
+        # 別の方法で取得
+        ACTUAL_DEVICE=$(lsblk -n -o PKNAME,MOUNTPOINT | grep " /$" | awk '{print $1}')
+        if [ ! -z "$ACTUAL_DEVICE" ]; then
+            # パーティション番号も取得
+            PART_NAME=$(lsblk -n -o NAME,MOUNTPOINT | grep " /$" | awk '{print $1}')
+            ACTUAL_DEVICE="/dev/$PART_NAME"
+        fi
+    else
+        ACTUAL_DEVICE="/dev/$ACTUAL_DEVICE"
+    fi
+    echo "📊 実際のデバイス（lsblkから）: $ACTUAL_DEVICE"
     ROOT_DEVICE=$ACTUAL_DEVICE
 else
+    ROOT_DEVICE=$ROOT_DEVICE_DISPLAY
     ACTUAL_DEVICE=$ROOT_DEVICE
+fi
+
+# デバイスが見つからない場合のフォールバック
+if [ -z "$ROOT_DEVICE" ] || [ "$ROOT_DEVICE" == "/dev/" ]; then
+    echo "⚠️  lsblkからデバイスを取得できませんでした。手動で指定します..."
+    # lsblkの出力から推測
+    ROOT_PART=$(lsblk -n -o NAME,MOUNTPOINT | grep " /$" | awk '{print $1}')
+    if [ ! -z "$ROOT_PART" ]; then
+        ROOT_DEVICE="/dev/$ROOT_PART"
+        echo "📊 推測されたデバイス: $ROOT_DEVICE"
+    else
+        echo "❌ デバイスを特定できませんでした。手動で実行してください。"
+        echo "   lsblk の出力を確認し、ルートパーティション（/）のデバイス名を使用してください"
+        exit 1
+    fi
 fi
 
 echo "📊 使用するデバイス: $ROOT_DEVICE"
@@ -45,8 +72,8 @@ if [[ $ROOT_DEVICE == /dev/nvme* ]]; then
         PARTITION_NUM="1"
     fi
     PARTITION_DEVICE="${BASE_DEVICE}p${PARTITION_NUM}"
-elif [[ $ROOT_DEVICE == /dev/xvda* ]]; then
-    # 従来のデバイスの場合（例: /dev/xvda1）
+elif [[ $ROOT_DEVICE == /dev/xvda* ]] || [[ $ROOT_DEVICE == /dev/sda* ]]; then
+    # 従来のデバイスの場合（例: /dev/xvda1, /dev/sda1）
     BASE_DEVICE=$(echo $ROOT_DEVICE | sed 's/[0-9]*$//')
     PARTITION_NUM=$(echo $ROOT_DEVICE | grep -o '[0-9]*$')
     PARTITION_DEVICE=$ROOT_DEVICE
