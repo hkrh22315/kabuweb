@@ -18,14 +18,32 @@ echo ""
 
 # ルートファイルシステムのデバイスを確認
 ROOT_DEVICE=$(df / | tail -1 | awk '{print $1}')
-echo "📊 ルートファイルシステム: $ROOT_DEVICE"
+echo "📊 ルートファイルシステム（表示）: $ROOT_DEVICE"
+
+# /dev/rootの場合は実際のデバイスを確認
+if [ "$ROOT_DEVICE" == "/dev/root" ]; then
+    # lsblkから実際のデバイスを取得
+    ACTUAL_DEVICE=$(lsblk -n -o NAME,MOUNTPOINT | grep " /$" | awk '{print "/dev/"$1}')
+    echo "📊 実際のデバイス: $ACTUAL_DEVICE"
+    ROOT_DEVICE=$ACTUAL_DEVICE
+else
+    ACTUAL_DEVICE=$ROOT_DEVICE
+fi
+
+echo "📊 使用するデバイス: $ROOT_DEVICE"
 echo ""
 
 # デバイス名からパーティション番号を抽出
 if [[ $ROOT_DEVICE == /dev/nvme* ]]; then
     # NVMeデバイスの場合（例: /dev/nvme0n1p1）
-    BASE_DEVICE=$(echo $ROOT_DEVICE | sed 's/p[0-9]*$//')
-    PARTITION_NUM=$(echo $ROOT_DEVICE | grep -o 'p[0-9]*$' | sed 's/p//')
+    if [[ $ROOT_DEVICE =~ p[0-9]+$ ]]; then
+        BASE_DEVICE=$(echo $ROOT_DEVICE | sed 's/p[0-9]*$//')
+        PARTITION_NUM=$(echo $ROOT_DEVICE | grep -o 'p[0-9]*$' | sed 's/p//')
+    else
+        # パーティション番号がない場合（例: /dev/nvme0n1）
+        BASE_DEVICE=$ROOT_DEVICE
+        PARTITION_NUM="1"
+    fi
     PARTITION_DEVICE="${BASE_DEVICE}p${PARTITION_NUM}"
 elif [[ $ROOT_DEVICE == /dev/xvda* ]]; then
     # 従来のデバイスの場合（例: /dev/xvda1）
@@ -71,7 +89,13 @@ echo "🔧 ファイルシステムを拡張中..."
 if [ "$FS_TYPE" == "xfs" ]; then
     sudo xfs_growfs /
 elif [ "$FS_TYPE" == "ext4" ] || [ "$FS_TYPE" == "ext3" ] || [ "$FS_TYPE" == "ext2" ]; then
-    sudo resize2fs $PARTITION_DEVICE
+    # ext4の場合は、パーティションデバイスまたはマウントポイントを使用
+    if [ -b "$PARTITION_DEVICE" ]; then
+        sudo resize2fs $PARTITION_DEVICE
+    else
+        # デバイスが見つからない場合はマウントポイントから
+        sudo resize2fs $ROOT_DEVICE
+    fi
 else
     echo "⚠️  不明なファイルシステムタイプ: $FS_TYPE"
     echo "   手動で拡張してください"
