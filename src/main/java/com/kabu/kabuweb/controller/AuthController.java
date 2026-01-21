@@ -5,10 +5,12 @@ import com.kabu.kabuweb.entity.User;
 import com.kabu.kabuweb.repository.UserRepository;
 import com.kabu.kabuweb.service.UserDetailsServiceImpl;
 import com.kabu.kabuweb.util.JwtUtil;
+import org.springframework.dao.DataAccessException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
@@ -34,31 +36,80 @@ public class AuthController {
     // 1. ユーザー登録
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody AuthRequest request) {
-        if (userRepository.findByUsername(request.getUsername()).isPresent()) {
-            return ResponseEntity.badRequest().body("Username is already taken!");
+        try {
+            // ユーザー名のバリデーション
+            if (request.getUsername() == null || request.getUsername().trim().isEmpty()) {
+                return ResponseEntity.badRequest()
+                    .body(Collections.singletonMap("message", "ユーザー名は必須です"));
+            }
+            
+            if (request.getPassword() == null || request.getPassword().trim().isEmpty()) {
+                return ResponseEntity.badRequest()
+                    .body(Collections.singletonMap("message", "パスワードは必須です"));
+            }
+
+            // 既存ユーザーのチェック
+            if (userRepository.findByUsername(request.getUsername()).isPresent()) {
+                return ResponseEntity.badRequest()
+                    .body(Collections.singletonMap("message", "このユーザー名は既に使用されています"));
+            }
+
+            User user = new User();
+            user.setUsername(request.getUsername().trim());
+            user.setPassword(passwordEncoder.encode(request.getPassword()));
+            user.setRole("USER");
+
+            userRepository.save(user);
+            return ResponseEntity.ok(Collections.singletonMap("message", "ユーザー登録が完了しました"));
+        } catch (DataAccessException e) {
+            // データベース接続エラーなどの場合
+            return ResponseEntity.status(500)
+                .body(Collections.singletonMap("message", "データベースエラーが発生しました。しばらくしてから再度お試しください"));
+        } catch (Exception e) {
+            // その他の予期しないエラー
+            return ResponseEntity.status(500)
+                .body(Collections.singletonMap("message", "ユーザー登録中にエラーが発生しました"));
         }
-
-        User user = new User();
-        user.setUsername(request.getUsername());
-        user.setPassword(passwordEncoder.encode(request.getPassword()));
-        user.setRole("USER");
-
-        userRepository.save(user);
-        return ResponseEntity.ok("User registered successfully");
     }
 
     // 2. ログイン
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody AuthRequest request) {
-        final UserDetails userDetails = userDetailsService.loadUserByUsername(request.getUsername());
-        
-        if (!passwordEncoder.matches(request.getPassword(), userDetails.getPassword())) {
-            return ResponseEntity.status(401).body("Invalid credentials");
-        }
+        try {
+            // ユーザー名のバリデーション
+            if (request.getUsername() == null || request.getUsername().trim().isEmpty()) {
+                return ResponseEntity.badRequest()
+                    .body(Collections.singletonMap("message", "ユーザー名は必須です"));
+            }
+            
+            if (request.getPassword() == null || request.getPassword().trim().isEmpty()) {
+                return ResponseEntity.badRequest()
+                    .body(Collections.singletonMap("message", "パスワードは必須です"));
+            }
 
-        final String jwt = jwtUtil.generateToken(userDetails);
-        
-        return ResponseEntity.ok(Collections.singletonMap("token", jwt));
+            final UserDetails userDetails = userDetailsService.loadUserByUsername(request.getUsername());
+            
+            if (!passwordEncoder.matches(request.getPassword(), userDetails.getPassword())) {
+                return ResponseEntity.status(401)
+                    .body(Collections.singletonMap("message", "ユーザー名またはパスワードが正しくありません"));
+            }
+
+            final String jwt = jwtUtil.generateToken(userDetails);
+            
+            return ResponseEntity.ok(Collections.singletonMap("token", jwt));
+        } catch (UsernameNotFoundException e) {
+            // ユーザーが見つからない場合
+            return ResponseEntity.status(401)
+                .body(Collections.singletonMap("message", "ユーザー名またはパスワードが正しくありません"));
+        } catch (DataAccessException e) {
+            // データベース接続エラーなどの場合
+            return ResponseEntity.status(500)
+                .body(Collections.singletonMap("message", "データベースエラーが発生しました。しばらくしてから再度お試しください"));
+        } catch (Exception e) {
+            // その他の予期しないエラー
+            return ResponseEntity.status(500)
+                .body(Collections.singletonMap("message", "ログイン中にエラーが発生しました"));
+        }
     }
 
     // 3. Discord IDの登録・更新
