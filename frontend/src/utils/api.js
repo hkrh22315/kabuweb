@@ -1,5 +1,7 @@
 // APIリクエストヘルパー関数
-const BASE_URL = 'http://localhost:8080';
+// 環境変数からBASE_URLを読み込む（本番環境用）
+// VITE_プレフィックスが必要（Viteの仕様）
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
 
 export const apiRequest = async (url, options = {}) => {
   const token = localStorage.getItem('jwt_token');

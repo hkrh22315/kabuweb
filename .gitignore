@@ -33,6 +33,11 @@ build/
 .vscode/
 
 .env
+# 環境変数ファイル（.env.productionと.env.developmentはリポジトリに含める）
+!.env.production
+!.env.development
+!.env.production.example
+!.env.development.example
 
 target/
 node_modules/
