@@ -600,7 +600,8 @@ function MainApp() {
                         <tr className="border-b border-slate-700/50">
                           <th className="text-left py-3 px-4 text-sm font-semibold text-slate-300">銘柄</th>
                           <th className="text-center py-3 px-4 text-sm font-semibold text-slate-300">種別</th>
-                          <th className="text-right py-3 px-4 text-sm font-semibold text-slate-300">価格 × 数量</th>
+                          <th className="text-right py-3 px-4 text-sm font-semibold text-slate-300">数量</th>
+                          <th className="text-right py-3 px-4 text-sm font-semibold text-slate-300">価格</th>
                           <th className="text-right py-3 px-4 text-sm font-semibold text-slate-300">損益</th>
                           <th className="text-right py-3 px-4 text-sm font-semibold text-slate-300"></th>
                         </tr>
@@ -633,24 +634,23 @@ function MainApp() {
                               </td>
                               <td className="py-4 px-4 text-right">
                                 <div className="flex flex-col items-end">
-                                  {trade.action === "BUY" && (
-                                    <>
-                                      <span className="font-mono font-semibold text-emerald-400">
-                                        ¥{Number(trade.price).toLocaleString()} × {trade.amount}株
-                                      </span>
-                                      {trade.soldAmount > 0 && (
-                                        <span className="text-xs text-slate-400 mt-1">
-                                          売却済み: {trade.soldAmount}株 / 残り: {trade.amount - trade.soldAmount}株
-                                        </span>
-                                      )}
-                                    </>
-                                  )}
-                                  {trade.action === "SELL" && (
-                                    <span className="font-mono font-semibold text-pink-400">
-                                      ¥{Number(trade.price).toLocaleString()} × {trade.amount}株
+                                  <div>
+                                    <span className={`font-mono font-semibold ${trade.action === "BUY" ? 'text-emerald-400' : 'text-pink-400'}`}>
+                                      {trade.amount}
+                                    </span>
+                                    <span className="text-slate-500 text-sm ml-1">株</span>
+                                  </div>
+                                  {trade.action === "BUY" && (trade.soldAmount || 0) > 0 && (
+                                    <span className="text-xs text-slate-400 mt-1">
+                                      売却済み: {trade.soldAmount}株 / 残り: {trade.amount - trade.soldAmount}株
                                     </span>
                                   )}
                                 </div>
+                              </td>
+                              <td className="py-4 px-4 text-right">
+                                <span className={`font-mono font-semibold ${trade.action === "BUY" ? 'text-emerald-400' : 'text-pink-400'}`}>
+                                  ¥{Number(trade.price).toLocaleString()}
+                                </span>
                               </td>
                               <td className="py-4 px-4 text-right">
                                 {profitLoss !== null && (
