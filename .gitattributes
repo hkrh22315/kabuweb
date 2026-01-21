@@ -1,8 +1,50 @@
 /mvnw text eol=lf
 *.cmd text eol=crlf
 *.sh text eol=lf
-*.sh text eol=lf
+
+# Line ending policy for this repository
+# --------------------------------------
+# - All text files: use LF (\n)
+# - Binary files: never change line endings
+#
+# Windowsでも改行コードはLFで統一します。
+# Gitの自動変換はcore.autocrlf=falseとし、
+# 改行コードの制御はこの.gitattributesで行います。
 
 # Git configuration files
-.gitignore text eol=lf
-*/.gitignore text eol=lf
+.gitignore    text eol=lf
+*/.gitignore  text eol=lf
+
+# Binary files (no EOL conversion)
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.gif   binary
+*.webp  binary
+*.ico   binary
+*.bmp   binary
+
+*.jar   binary
+*.zip   binary
+*.gz    binary
+*.tgz   binary
+*.tar   binary
+*.7z    binary
+*.pdf   binary
+
+# Text files (LF) - representative patterns
+*.java       text eol=lf
+*.properties text eol=lf
+*.js         text eol=lf
+*.jsx        text eol=lf
+*.ts         text eol=lf
+*.tsx        text eol=lf
+*.css        text eol=lf
+*.html       text eol=lf
+*.md         text eol=lf
+*.yml        text eol=lf
+*.yaml       text eol=lf
+*.json       text eol=lf
+
+# Fallback: all remaining text files are LF
+* text eol=lf
