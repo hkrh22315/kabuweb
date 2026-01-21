@@ -1,13 +1,19 @@
 // APIリクエストヘルパー関数
 // 環境変数からBASE_URLを読み込む（本番環境用）
 // VITE_プレフィックスが必要（Viteの仕様）
+// BASE_URLが空の場合、相対URLを使用（同じサーバーから配信される場合）
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080';
 
 export const apiRequest = async (url, options = {}) => {
   const token = localStorage.getItem('jwt_token');
   
   // URLが完全なURLでない場合、BASE_URLを追加
-  const fullUrl = url.startsWith('http') ? url : `${BASE_URL}${url}`;
+  // BASE_URLが空の場合は相対URLを使用
+  const fullUrl = url.startsWith('http') 
+    ? url 
+    : BASE_URL 
+      ? `${BASE_URL}${url}`
+      : url;
   
   const headers = {
     'Content-Type': 'application/json',
