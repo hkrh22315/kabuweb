@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import './App.css'
 import { ALL_STOCKS } from './stockData';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
@@ -20,7 +20,7 @@ function MainApp() {
   const [currentPage, setCurrentPage] = useState('holdings'); // 'holdings', 'trades', 'alerts'
 
   // データ取得
-  const fetchTrades = () => {
+  const fetchTrades = useCallback(() => {
     apiGet('/trades')
       .then(data => {
         setTrades(data);
@@ -29,7 +29,7 @@ function MainApp() {
         console.error("エラー:", err);
         setTrades([]); // エラー時は空配列を設定
       })
-  }
+  }, [])
 
   // 認証状態が変わったとき、または画面が開いたときにデータを取得
   useEffect(() => {
@@ -40,8 +40,17 @@ function MainApp() {
     }
   }, [isAuthenticated])
 
+  // デバウンスタイマーのクリーンアップ
+  useEffect(() => {
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+    };
+  }, [])
+
   // 検索文字列を正規化（改善版）
-  const normalizeSearchText = (text) => {
+  const normalizeSearchText = useCallback((text) => {
     if (!text) return '';
     // まずNFKC正規化で全角半角を統一（先に正規化することで、後続の処理が確実に動作する）
     let normalized = String(text).normalize('NFKC');
@@ -53,119 +62,164 @@ function MainApp() {
     // 長音記号を除去
     normalized = normalized.replace(/[ー－−―─━]/g, '');   // 各種長音記号除去
     return normalized;
-  };
+  }, []);
 
   // 銘柄コードの数字部分を取得（"8729.T" -> "8729"）
-  const getCodeNumber = (code) => {
+  const getCodeNumber = useCallback((code) => {
     return code.replace(/\.T$/, '');
-  };
+  }, []);
+
+  // 正規化結果の事前計算とキャッシュ化
+  const normalizedStocksCache = useMemo(() => {
+    return ALL_STOCKS.map(stock => ({
+      ...stock,
+      normalizedName: normalizeSearchText(stock.name),
+      normalizedKana: stock.kana ? normalizeSearchText(stock.kana) : '',
+      normalizedRomaji: stock.romaji ? normalizeSearchText(stock.romaji) : '',
+      codeNumber: getCodeNumber(stock.code),
+      codeLower: stock.code.toLowerCase()
+    }));
+  }, [normalizeSearchText, getCodeNumber]);
 
   // 銘柄コードから銘柄名を取得
-  const getStockNameFromTicker = (ticker) => {
+  const getStockNameFromTicker = useCallback((ticker) => {
     if (!ticker) return ticker || '';
     const stock = ALL_STOCKS.find(s => s.code === ticker);
     return stock ? stock.name : ticker; // 見つからない場合は銘柄コードを返す
-  };
+  }, []);
 
   // フォーム入力の処理
-  const handleChange = (e) => {
+  const handleChange = useCallback((e) => {
     const newFormData = { ...formData, [e.target.name]: e.target.value };
     setFormData(newFormData);
-  }
+  }, [formData]);
 
-  //候補関数（改善版）
-  const updateSuggestions  = (e) => {
-    const value = e.target.value;
+  // デバウンス用のタイマー参照
+  const debounceTimerRef = useRef(null);
 
-    if(value.length > 0) {
-      const normalizedValue = normalizeSearchText(value);
-      const valueLower = value.toLowerCase();
+  // 検索処理（最適化版）
+  const performSearch = useCallback((value) => {
+    if (!value || value.length === 0) {
+      setSuggestedStocks([]);
+      return;
+    }
 
-      // 数字のみが入力された場合の特別処理
-      const isNumericOnly = /^\d+$/.test(value);
+    const normalizedValue = normalizeSearchText(value);
+    const valueLower = value.toLowerCase();
+    const isNumericOnly = /^\d+$/.test(value);
+    const maxResults = 20;
+    const results = [];
 
-      // 検索結果をスコアリングしてソート
-      const scoredStocks = ALL_STOCKS.map(stock => {
-        let score = 0;
-        const codeNumber = getCodeNumber(stock.code);
-        const normalizedName = normalizeSearchText(stock.name);
-        const normalizedKana = stock.kana ? normalizeSearchText(stock.kana) : '';
-        const normalizedRomaji = stock.romaji ? normalizeSearchText(stock.romaji) : '';
+    // 早期終了用: 完全一致が見つかった場合のフラグ
+    let foundExactMatch = false;
 
-        if (isNumericOnly) {
-          // 数字のみの場合：銘柄コードの数字部分で検索
-          if (codeNumber.startsWith(value)) {
-            score = 1000 - codeNumber.length; // 短いコードを優先
-          }
-        } else {
-          // 1. 銘柄コード完全一致（最高優先度）
-          if (stock.code.toLowerCase() === valueLower) {
-            score = 10000;
-          }
-          // 2. 銘柄名完全一致
-          else if (normalizedName === normalizedValue) {
-            score = 9000;
-          }
-          // 3. 平仮名完全一致
-          else if (normalizedKana && normalizedKana === normalizedValue) {
-            score = 8500;
-          }
-          // 4. ローマ字完全一致
-          else if (normalizedRomaji && normalizedRomaji === normalizedValue) {
-            score = 8000;
-          }
-          // 5. 銘柄コード前方一致
-          else if (stock.code.toLowerCase().startsWith(valueLower)) {
-            score = 8000 - stock.code.length;
-          }
-          // 6. 銘柄名前方一致
-          else if (normalizedName.startsWith(normalizedValue)) {
-            score = 7000 - normalizedName.length;
-          }
-          // 7. 平仮名前方一致
-          else if (normalizedKana && normalizedKana.startsWith(normalizedValue)) {
-            score = 7500 - normalizedKana.length;
-          }
-          // 8. ローマ字前方一致
-          else if (normalizedRomaji && normalizedRomaji.startsWith(normalizedValue)) {
-            score = 7000 - normalizedRomaji.length;
-          }
-          // 9. 銘柄コードの数字部分で検索
-          else if (codeNumber.includes(value)) {
-            score = 6000 - codeNumber.length;
-          }
-          // 10. 銘柄名部分一致
-          else if (normalizedName.includes(normalizedValue)) {
-            score = 5000 - normalizedName.length;
-          }
-          // 11. ひらがな部分一致
-          else if (normalizedKana && normalizedKana.includes(normalizedValue)) {
-            score = 4000 - normalizedKana.length;
-          }
-          // 12. ローマ字部分一致
-          else if (normalizedRomaji && normalizedRomaji.includes(normalizedValue)) {
-            score = 3000 - normalizedRomaji.length;
-          }
-          // 13. 銘柄コード部分一致
-          else if (stock.code.toLowerCase().includes(valueLower)) {
-            score = 2000;
-          }
+    for (const stockData of normalizedStocksCache) {
+      if (foundExactMatch && results.length >= maxResults) break;
+
+      let score = 0;
+
+      if (isNumericOnly) {
+        // 数字のみの場合：銘柄コードの数字部分で検索
+        if (stockData.codeNumber.startsWith(value)) {
+          score = 1000 - stockData.codeNumber.length;
         }
+      } else {
+        // 1. 銘柄コード完全一致（最高優先度）
+        if (stockData.codeLower === valueLower) {
+          score = 10000;
+          foundExactMatch = true;
+        }
+        // 2. 銘柄名完全一致
+        else if (stockData.normalizedName === normalizedValue) {
+          score = 9000;
+        }
+        // 3. 平仮名完全一致
+        else if (stockData.normalizedKana && stockData.normalizedKana === normalizedValue) {
+          score = 8500;
+        }
+        // 4. ローマ字完全一致
+        else if (stockData.normalizedRomaji && stockData.normalizedRomaji === normalizedValue) {
+          score = 8000;
+        }
+        // 5. 銘柄コード前方一致
+        else if (stockData.codeLower.startsWith(valueLower)) {
+          score = 8000 - stockData.code.length;
+        }
+        // 6. 銘柄名前方一致
+        else if (stockData.normalizedName.startsWith(normalizedValue)) {
+          score = 7000 - stockData.normalizedName.length;
+        }
+        // 7. 平仮名前方一致
+        else if (stockData.normalizedKana && stockData.normalizedKana.startsWith(normalizedValue)) {
+          score = 7500 - stockData.normalizedKana.length;
+        }
+        // 8. ローマ字前方一致
+        else if (stockData.normalizedRomaji && stockData.normalizedRomaji.startsWith(normalizedValue)) {
+          score = 7000 - stockData.normalizedRomaji.length;
+        }
+        // 9. 銘柄コードの数字部分で検索
+        else if (stockData.codeNumber.includes(value)) {
+          score = 6000 - stockData.codeNumber.length;
+        }
+        // 10. 銘柄名部分一致
+        else if (stockData.normalizedName.includes(normalizedValue)) {
+          score = 5000 - stockData.normalizedName.length;
+        }
+        // 11. ひらがな部分一致
+        else if (stockData.normalizedKana && stockData.normalizedKana.includes(normalizedValue)) {
+          score = 4000 - stockData.normalizedKana.length;
+        }
+        // 12. ローマ字部分一致
+        else if (stockData.normalizedRomaji && stockData.normalizedRomaji.includes(normalizedValue)) {
+          score = 3000 - stockData.normalizedRomaji.length;
+        }
+        // 13. 銘柄コード部分一致
+        else if (stockData.codeLower.includes(valueLower)) {
+          score = 2000;
+        }
+      }
 
-        return { stock, score };
-      })
-      .filter(item => item.score > 0)
+      if (score > 0) {
+        results.push({ stock: ALL_STOCKS.find(s => s.code === stockData.code), score });
+        // 完全一致が見つかり、十分な結果が集まった場合は早期終了
+        if (foundExactMatch && results.length >= maxResults) {
+          break;
+        }
+      }
+    }
+
+    // スコアでソートして上位20件を取得
+    const sortedResults = results
       .sort((a, b) => b.score - a.score)
+      .slice(0, maxResults)
       .map(item => item.stock);
 
-      setSuggestedStocks(scoredStocks.slice(0, 20));
-    } else {
+    setSuggestedStocks(sortedResults);
+  }, [normalizedStocksCache, normalizeSearchText]);
+
+  // デバウンス処理付きの候補更新関数
+  const updateSuggestions = useCallback((e) => {
+    const value = e.target.value;
+
+    // 空の場合は即座にクリア
+    if (!value || value.length === 0) {
       setSuggestedStocks([]);
+      return;
     }
-  };
+
+    // 既存のタイマーをクリア
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+
+    // 300ms後に検索を実行
+    debounceTimerRef.current = setTimeout(() => {
+      performSearch(value);
+    }, 300);
+  }, [performSearch]);
 
   // 追加ボタン
-  const handleSubmit = (e) => {
+  const handleSubmit = useCallback((e) => {
     e.preventDefault()
     apiPost('/trades/add', formData)
       .then(() => {
@@ -176,13 +230,13 @@ function MainApp() {
       .catch(err => {
         console.error('登録エラー:', err)
       })
-  }
+  }, [formData])
 
-  const handleAlertChange = (e) => {
+  const handleAlertChange = useCallback((e) => {
     setAlertForm({ ...alertForm, [e.target.name]: e.target.value})
-  }
+  }, [alertForm])
 
-  const handleAlertSubmit = (e) => {
+  const handleAlertSubmit = useCallback((e) => {
     e.preventDefault()
 
     const dataToSend = {
@@ -200,10 +254,10 @@ function MainApp() {
       .catch(err => {
         console.error('通知設定エラー:', err)
       })
-  }
+  }, [alertForm])
 
   // 削除ボタン
-  const handleDelete = (id) => {
+  const handleDelete = useCallback((id) => {
     apiDelete(`/trades/delete?id=${id}`)
       .then(() => {
         fetchTrades();
@@ -211,10 +265,10 @@ function MainApp() {
       .catch(err => {
         console.error("削除エラー:", err);
       })
-  }
+  }, [])
 
   // 売却処理
-  const handleSell = async (buyTradeId, sellPrice, sellAmount) => {
+  const handleSell = useCallback(async (buyTradeId, sellPrice, sellAmount) => {
     const response = await apiPost('/trades/sell', {
       buyTradeId,
       sellPrice,
@@ -224,19 +278,18 @@ function MainApp() {
     fetchTrades();
     
     return response;
-  }
+  }, [])
 
   // 売却モーダルを開く
-  const openSellModal = (trade) => {
+  const openSellModal = useCallback((trade) => {
     setSelectedBuyTrade(trade);
     setIsSellModalOpen(true);
-  }
-
+  }, [])
 
   // ログアウト処理
-  const handleLogout = () => {
+  const handleLogout = useCallback(() => {
     logout()
-  }
+  }, [logout])
 
 
   if (!isAuthenticated) {
@@ -354,10 +407,11 @@ function MainApp() {
                     if (value.includes(' - ')) {
                       const code = value.split(' - ')[0];
                       setFormData({ ...formData, ticker: code });
+                      setSuggestedStocks([]); // 選択時は候補をクリア
                     } else {
                       handleChange(e);
+                      updateSuggestions(e);
                     }
-                    updateSuggestions(e);
                   }} 
                   required 
                 />
@@ -423,10 +477,11 @@ function MainApp() {
                     if (value.includes(' - ')) {
                       const code = value.split(' - ')[0];
                       setAlertForm({ ...alertForm, ticker: code });
+                      setSuggestedStocks([]); // 選択時は候補をクリア
                     } else {
                       handleAlertChange(e);
+                      updateSuggestions(e);
                     }
-                    updateSuggestions(e);
                   }} 
                   required 
                 />
