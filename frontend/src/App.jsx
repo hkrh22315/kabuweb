@@ -12,7 +12,7 @@ function MainApp() {
   const [trades, setTrades] = useState([])
   const USERS = [ { name: 'HR', id: '896281261788778546'}, { name: "SSD", id: '890490199522545694'}]
   const [formData, setFormData] = useState({ticker: '', price: '', amount: '', action: 'BUY', discordId: ''})
-  const [alertForm, setAlertForm] = useState({ticker: '', targetPrice: '', discordId: ''})
+  const [alertForm, setAlertForm] = useState({ticker: '', targetPrice: '', notificationThreshold: '5', discordId: ''})
   const [suggestedStocks, setSuggestedStocks] = useState([]);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isSellModalOpen, setIsSellModalOpen] = useState(false);
@@ -188,13 +188,14 @@ function MainApp() {
     const dataToSend = {
       ticker: alertForm.ticker,
       targetPrice: Number(alertForm.targetPrice),
+      notificationThreshold: Number(alertForm.notificationThreshold) || 5,
       discordId: alertForm.discordId || null
     }
 
     apiPost('/trades/alert', dataToSend)
       .then(() => {
         fetchTrades()
-        setAlertForm({ticker: '', targetPrice: '', discordId: ''})
+        setAlertForm({ticker: '', targetPrice: '', notificationThreshold: '5', discordId: ''})
       })
       .catch(err => {
         console.error('通知設定エラー:', err)
@@ -445,6 +446,19 @@ function MainApp() {
                   placeholder="目標価格" 
                   className="input w-full no-spinner"
                   onChange={handleAlertChange} 
+                  required 
+                />
+              </div>
+              <div>
+                <input 
+                  name="notificationThreshold" 
+                  type="number" 
+                  value={alertForm.notificationThreshold} 
+                  placeholder="通知閾値（円）" 
+                  className="input w-full no-spinner"
+                  onChange={handleAlertChange} 
+                  min="1"
+                  step="1"
                   required 
                 />
               </div>
@@ -705,6 +719,7 @@ function MainApp() {
                         <tr className="border-b border-slate-700/50">
                           <th className="text-left py-3 px-4 text-sm font-semibold text-slate-300">銘柄</th>
                           <th className="text-right py-3 px-4 text-sm font-semibold text-slate-300">目標価格</th>
+                          <th className="text-right py-3 px-4 text-sm font-semibold text-slate-300">通知閾値</th>
                           <th className="text-right py-3 px-4 text-sm font-semibold text-slate-300"></th>
                         </tr>
                       </thead>
@@ -726,6 +741,11 @@ function MainApp() {
                                   ¥{Number(trade.targetPrice).toLocaleString()}
                                 </span>
                               )}
+                            </td>
+                            <td className="py-4 px-4 text-right">
+                              <span className="font-mono font-semibold text-pink-300">
+                                ±¥{Number(trade.notificationThreshold || 5).toLocaleString()}
+                              </span>
                             </td>
                             <td className="py-4 px-4">
                               <div className="flex gap-2 justify-end">

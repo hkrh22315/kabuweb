@@ -150,8 +150,14 @@ public class TradeController {
             }
 
             double priceDiff = Math.abs(currentPrice - trade.getTargetPrice());
+            
+            // 通知閾値を取得（nullの場合はデフォルト値5.0を使用）
+            Double threshold = trade.getNotificationThreshold();
+            if (threshold == null) {
+                threshold = 5.0;
+            }
 
-            if (priceDiff <= 5) {
+            if (priceDiff <= threshold) {
                 try {
                     // UserのDiscord IDを使用
                     String discordId = trade.getUser().getDiscordId();
@@ -219,6 +225,11 @@ public class TradeController {
         trade.setAction("WATCH");
         trade.setAmount(0);
         trade.setPrice(0.0);
+        
+        // 通知閾値が設定されていない場合はデフォルト値5.0を設定
+        if (trade.getNotificationThreshold() == null) {
+            trade.setNotificationThreshold(5.0);
+        }
 
         if(trade.getName() == null || trade.getName().isEmpty()) {
             trade.setName(trade.getTicker());

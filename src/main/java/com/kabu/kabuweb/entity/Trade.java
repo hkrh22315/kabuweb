@@ -28,6 +28,8 @@ public class Trade {
 
     private Double targetPrice;
 
+    private Double notificationThreshold;
+
     private String discordId;
 
     private Long buyTradeId;
@@ -60,6 +62,9 @@ public class Trade {
 
     public Double getTargetPrice() { return targetPrice;}
     public void setTargetPrice(Double targetPrice) { this.targetPrice = targetPrice;}
+
+    public Double getNotificationThreshold() { return notificationThreshold;}
+    public void setNotificationThreshold(Double notificationThreshold) { this.notificationThreshold = notificationThreshold;}
 
     public String getDiscordId() { return discordId;}
     public void setDiscordId(String discordId) { this.discordId = discordId;}
